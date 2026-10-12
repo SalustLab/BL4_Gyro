@@ -1,0 +1,17 @@
+=== ttmax-diag steam  label switch-steam-api  2026-10-11 22:34:43  SDL 3.4.16
+steam controller: handle 115453269065297 type 10 (SwitchProController), 1 connected
+steam polls: 19070
+--- samples
+gyro samples: 8442 over 38.10 s (sample clock) -> 221.5 Hz
+sample dt ms: min 1.03  p50 2.53  p99 28.51  max 3929.33  (non-positive: 0)
+arrival dt ms: p50 2.53  p99 28.51  max 3929.33 (batching shows as 0 ms arrivals)
+--- rest (bias / noise / units)
+gyro mean dps: pitch +0.158  yaw -0.362  roll -0.404
+gyro sigma dps: pitch 0.055  yaw 0.105  roll 0.061
+accel |g| mean: 1.0867 (expect ~1.000)
+drift if uncalibrated: 21.7 deg/min yaw
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +0.0 deg, pitch -0.0 deg -> YAW SIGN OK, scale 0.000
+pitch step (expect +90): pitch +84.7 deg, yaw -0.4 deg -> PITCH SIGN OK, scale 0.941
+--- events
+[  0.00s] ADDED handle 115453269065297

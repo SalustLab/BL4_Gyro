@@ -1,0 +1,19 @@
+=== ttmax-diag sdl  label pc-bt  2026-10-11 22:23:14  SDL 3.4.16
+gamepad: "Xbox One S Controller" type xboxone  045e:02fd  connection unknown  steam_handle 0
+    path XInput#0
+    gyro: no  rate 0.0 Hz
+    accel: no  rate 0.0 Hz
+--- samples
+gyro samples: 0 over 0.00 s (sample clock) -> 0.0 Hz
+sample dt ms: min 0.00  p50 0.00  p99 0.00  max 0.00  (non-positive: 0)
+arrival dt ms: p50 0.00  p99 0.00  max 0.00 (batching shows as 0 ms arrivals)
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +0.0 deg, pitch +0.0 deg -> no sensor, scale 0.000
+pitch step (expect +90): pitch +0.0 deg, yaw +0.0 deg -> no sensor, scale 0.000
+--- triggers / stick
+left_trigger: 73 distinct values -> ANALOG
+right_trigger: 88 distinct values -> ANALOG
+right stick max |value| during yaw/pitch: 1944 -> no motion-to-stick emulation seen
+--- events
+[  0.00s] REMOVED id 1
+[  0.00s] ADDED id 2 "Xbox One S Controller"

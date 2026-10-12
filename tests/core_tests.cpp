@@ -37,7 +37,7 @@ static void steam_sample_is_scaled_and_remapped_to_sdl_axes()
     CHECK(near(s.t_s, 1.5));
     CHECK(near(s.gyro_dps[0], 1000.0));  // pitch
     CHECK(near(s.gyro_dps[1], -2000.0)); // yaw = Steam Z
-    CHECK(near(s.gyro_dps[2], -500.0));  // roll about +Z(SDL) = -Y(Steam)
+    CHECK(near(s.gyro_dps[2], 500.0));   // roll: same sign as SDL, measured (rest bias -0.38 SDL vs +0.41 Steam before fix)
     CHECK(near(s.accel_g[0], 0.0));
     CHECK(near(s.accel_g[1], 1.0));      // SDL up = Steam Z
     CHECK(near(s.accel_g[2], 0.0));

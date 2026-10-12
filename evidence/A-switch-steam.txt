@@ -1,0 +1,23 @@
+=== ttmax-diag sdl  label switch-steam  2026-10-11 22:26:21  SDL 3.4.16
+gamepad: "Nintendo Switch Pro Controller" type switchpro  057e:2009  wireless  steam_handle 0
+    path \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&0002057e_PID&2009#d&169de1b1&3&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+    gyro: YES  rate 200.0 Hz
+    accel: YES  rate 200.0 Hz
+--- samples
+gyro samples: 39334 over 51.48 s (sample clock) -> 764.0 Hz
+sample dt ms: min 1.13  p50 1.19  p99 5.00  max 5.00  (non-positive: 0)
+arrival dt ms: p50 0.01  p99 9.18  max 65.58 (batching shows as 0 ms arrivals)
+--- rest (bias / noise / units)
+gyro mean dps: pitch -8.143  yaw -0.612  roll -0.689
+gyro sigma dps: pitch 24.215  yaw 4.595  roll 3.239
+accel |g| mean: 1.0863 (expect ~1.000)
+drift if uncalibrated: 36.7 deg/min yaw
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +339.1 deg, pitch +166.1 deg -> YAW SIGN OK, scale 0.942
+pitch step (expect +90): pitch +138.5 deg, yaw -4.8 deg -> PITCH SIGN OK, scale 1.538
+--- triggers / stick
+left_trigger: 2 distinct values -> DIGITAL
+right_trigger: 2 distinct values -> DIGITAL
+right stick max |value| during yaw/pitch: 2881 -> no motion-to-stick emulation seen
+--- events
+[  0.00s] ADDED id 1 "Nintendo Switch Pro Controller"

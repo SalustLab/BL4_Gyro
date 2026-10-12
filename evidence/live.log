@@ -1,0 +1,362 @@
+ttmax-diag hid  2026-10-11 22:17:22  SDL 3.4.16
+373b:103d usage 0001:0002 if 2 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_02#a&aee55d&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage 0001:0006 if 0 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_00#a&270f1dd9&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\KBD
+41e4:2116 usage 0001:0006 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col01#8&33da9c46&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\KBD
+373b:103d usage ff05:0000 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col01#a&13df019b&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage ff03:0000 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col02#a&13df019b&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage 000c:0001 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col03#a&13df019b&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage 0001:0080 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col04#a&13df019b&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage ff02:0002 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col05#a&13df019b&0&0004#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0006 if 0 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_00#8&27c6eac9&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\KBD
+373b:103d usage ff04:0002 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col06#a&13df019b&0&0005#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage ff06:0002 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col07#a&13df019b&0&0006#{4d1e55b2-f16f-11cf-88cb-001111000030}
+048d:5711 usage ff89:0010 if 1 bus USB  "ITE Tech. Inc." / "GIGABYTE Device "
+    \\?\HID#VID_048D&PID_5711&MI_01&Col01#a&30f861b2&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+048d:5711 usage 0059:0001 if 0 bus USB  "ITE Tech. Inc." / "GIGABYTE Device "
+    \\?\HID#VID_048D&PID_5711&MI_00#a&88db3e9&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+048d:5711 usage ff89:00cc if 1 bus USB  "ITE Tech. Inc." / "GIGABYTE Device "
+    \\?\HID#VID_048D&PID_5711&MI_01&Col02#a&30f861b2&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0000 if 1 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_01#8&10035e84&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0002 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col02#8&33da9c46&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 000c:0001 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col03#8&33da9c46&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0080 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col04#8&33da9c46&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:000c if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col05#8&33da9c46&0&0004#{4d1e55b2-f16f-11cf-88cb-001111000030}
+057e:2009 usage 0001:0005 if -1 bus BT  "Nintendo" / "Wireless Gamepad"
+    \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&0002057e_PID&2009#d&169de1b1&2&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+    report descriptor: 213 bytes: 05 01 09 05 a1 01 85 21 06 01 ff 09 21 15 00 25 00 75 08 95 30 81 02 85 ...
+20 HID interfaces
+--- ttmax-diag hid finished (rc 0)
+ttmax-diag sdl  2026-10-11 22:17:22  SDL 3.4.16
+waiting for an SDL gamepad...
+gamepad: "Nintendo Switch Pro Controller" type switchpro  057e:2009  wireless  steam_handle 0
+    path \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&0002057e_PID&2009#d&169de1b1&2&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+    gyro: YES  rate 200.0 Hz
+    accel: YES  rate 200.0 Hz
+[  0.00s] ADDED id 1 "Nintendo Switch Pro Controller"
+>>> [  0.0s] PARADO: deixe o controle imovel sobre a mesa
+[  0.0s] rest       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  3.0s] rest    2484 samples (826/s host) gyro p/y/r   +0.16   -0.30   -0.36 dps |a| 1.089 g  turned yaw   +0.0 pitch   +0.0  stickR   3887  trigR      0
+[  6.0s] rest    2409 samples (799/s host) gyro p/y/r   +0.14   -0.30   -0.35 dps |a| 1.087 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+>>> [  8.0s] YAW: com o controle deitado, gire ~90 graus para a DIREITA (sentido horario visto de cima) e pare
+[  9.0s] yaw     2545 samples (848/s host) gyro p/y/r   +0.17   -0.33   -0.38 dps |a| 1.091 g  turned yaw   -0.0 pitch   -0.0  stickR      0  trigR      0
+[ 12.0s] yaw     2451 samples (817/s host) gyro p/y/r   +0.14   -0.27   -0.36 dps |a| 1.091 g  turned yaw   -0.1 pitch   -0.0  stickR      0  trigR      0
+>>> [ 14.0s] PITCH: incline a frente do controle ~45 graus para CIMA e pare
+[ 15.0s] pitch   2526 samples (842/s host) gyro p/y/r   +0.02   -0.60   -0.23 dps |a| 1.097 g  turned yaw   +0.8 pitch   -0.5  stickR      0  trigR      0
+[ 18.0s] pitch   2496 samples (831/s host) gyro p/y/r   +0.18   -0.28   -0.36 dps |a| 1.096 g  turned yaw   +0.7 pitch   -0.4  stickR      0  trigR      0
+>>> [ 20.0s] GATILHO: aperte ZR/RT devagar ate o fundo e solte, 2 vezes
+[ 21.0s] trigger 2460 samples (820/s host) gyro p/y/r   +0.17   -0.28   -0.37 dps |a| 1.086 g  turned yaw   +0.6 pitch   -0.3  stickR      0  trigR      0
+[ 24.0s] trigger 2529 samples (841/s host) gyro p/y/r  +11.93   +0.19   -7.17 dps |a| 1.049 g  turned yaw   -1.0 pitch  +36.0  stickR      0  trigR      0
+>>> [ 26.0s] LIVRE: desconecte e reconecte o controle (hotplug) ou apenas aguarde o fim
+[ 27.0s] free    2448 samples (815/s host) gyro p/y/r  -21.00   +0.26  +20.74 dps |a| 0.954 g  turned yaw   -2.0 pitch  -26.1  stickR   3887  trigR      0
+[ 30.0s] free    2487 samples (829/s host) gyro p/y/r   +1.28  +15.56  -21.52 dps |a| 1.145 g  turned yaw  -53.1 pitch  -26.1  stickR   3681  trigR      0
+[ 33.0s] free    2577 samples (859/s host) gyro p/y/r   +4.20   -3.36   -6.50 dps |a| 1.266 g  turned yaw  -43.9 pitch  -13.8  stickR   2766  trigR      0
+[ 36.0s] free    2556 samples (851/s host) gyro p/y/r  -20.71   +3.99   -3.80 dps |a| 1.176 g  turned yaw  -56.5 pitch  -74.2  stickR      0  trigR      0
+[ 39.0s] free    2508 samples (835/s host) gyro p/y/r  +13.74  -11.26   +9.49 dps |a| 1.039 g  turned yaw  -23.9 pitch  -33.0  stickR   2401  trigR  32767
+--- samples
+gyro samples: 33300 over 43.82 s (sample clock) -> 759.8 Hz
+sample dt ms: min 1.13  p50 1.20  p99 5.00  max 5.00  (non-positive: 0)
+arrival dt ms: p50 0.01  p99 9.11  max 70.42 (batching shows as 0 ms arrivals)
+--- rest (bias / noise / units)
+gyro mean dps: pitch +0.156  yaw -0.310  roll -0.366
+gyro sigma dps: pitch 0.145  yaw 0.139  roll 0.146
+accel |g| mean: 1.0900 (expect ~1.000)
+drift if uncalibrated: 18.6 deg/min yaw
+--- sign checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw segment: yaw +0.8 deg, pitch -0.5 deg -> CHECK (expected > +30)
+pitch segment: pitch +0.2 deg, yaw -0.1 deg -> CHECK (expected > +20)
+--- triggers / stick
+left_trigger: 2 distinct values -> DIGITAL
+right_trigger: 2 distinct values -> DIGITAL
+right stick max |value| during yaw/pitch: 0 -> no motion-to-stick emulation seen
+--- events
+[  0.00s] ADDED id 1 "Nintendo Switch Pro Controller"
+--- ttmax-diag sdl finished (rc 0)
+=== ttmax-diag sdl  label switch-bt  2026-10-11 22:21:07  SDL 3.4.16
+waiting for an SDL gamepad...
+gamepad: "Nintendo Switch Pro Controller" type switchpro  057e:2009  wireless  steam_handle 0
+    path \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&0002057e_PID&2009#d&169de1b1&2&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+    gyro: YES  rate 200.0 Hz
+    accel: YES  rate 200.0 Hz
+[  0.00s] ADDED id 1 "Nintendo Switch Pro Controller"
+>>> [  0.0s] REST: leave the controller still on the desk (8 s, advances by itself)
+[  0.0s] rest       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  3.0s] rest    2485 samples (828/s host) gyro p/y/r  -43.28   +0.70   -4.65 dps |a| 1.102 g  turned yaw   +0.0 pitch   +0.0  stickR   3841  trigR      0
+[  6.0s] rest    2487 samples (828/s host) gyro p/y/r   -0.65   +0.76   -1.63 dps |a| 1.092 g  turned yaw   +0.0 pitch   +0.0  stickR   3841  trigR      0
+>>> [  8.0s] YAW: controller flat on the desk, turn it ONE FULL TURN (360) CLOCKWISE seen from above, back to the starting alignment. Then press Enter
+[  9.0s] yaw     2319 samples (771/s host) gyro p/y/r   +0.19   -0.32   -0.39 dps |a| 1.090 g  turned yaw   +0.7 pitch  +15.4  stickR      0  trigR      0
+[ 12.0s] yaw     2430 samples (810/s host) gyro p/y/r   +0.18   -0.32   -0.38 dps |a| 1.090 g  turned yaw   +3.2 pitch  +67.9  stickR      0  trigR      0
+[ 15.0s] yaw     2550 samples (849/s host) gyro p/y/r   +0.18   -0.34   -0.38 dps |a| 1.092 g  turned yaw   +5.7 pitch +119.3  stickR      0  trigR      0
+[ 18.0s] yaw     2517 samples (839/s host) gyro p/y/r   +0.18   -0.33   -0.39 dps |a| 1.093 g  turned yaw   +8.2 pitch +170.2  stickR      0  trigR      0
+[ 21.0s] yaw     2466 samples (822/s host) gyro p/y/r   -1.92   -3.96   +2.28 dps |a| 1.052 g  turned yaw  +21.2 pitch +212.5  stickR      0  trigR      0
+[ 24.0s] yaw     2504 samples (831/s host) gyro p/y/r   -9.40  -60.21   +3.46 dps |a| 1.147 g  turned yaw +206.4 pitch +234.2  stickR   3841  trigR      0
+[ 27.0s] yaw     2482 samples (827/s host) gyro p/y/r   -0.83  -54.91   -7.16 dps |a| 1.143 g  turned yaw +374.1 pitch +281.8  stickR      0  trigR      0
+>>> [ 29.7s] PITCH: lay it flat again, then raise the FRONT until it stands upright (90 deg, front to the ceiling). Hold and press Enter
+[ 30.0s] pitch   2514 samples (836/s host) gyro p/y/r   -1.43   -0.82   +0.16 dps |a| 1.090 g  turned yaw +378.0 pitch +327.0  stickR      0  trigR      0
+[ 33.0s] pitch   2391 samples (797/s host) gyro p/y/r   +0.18   -0.34   -0.39 dps |a| 1.085 g  turned yaw +380.4 pitch +377.1  stickR      0  trigR      0
+[ 36.0s] pitch   2541 samples (847/s host) gyro p/y/r   +0.17   -0.33   -0.39 dps |a| 1.093 g  turned yaw +382.9 pitch +428.3  stickR      0  trigR      0
+[ 39.1s] pitch   2420 samples (802/s host) gyro p/y/r   +0.18   -0.32   -0.38 dps |a| 1.093 g  turned yaw +385.3 pitch +478.1  stickR      0  trigR      0
+[ 42.1s] pitch   2500 samples (833/s host) gyro p/y/r  +31.12   +1.07   -0.71 dps |a| 1.007 g  turned yaw +383.4 pitch +623.3  stickR      0  trigR      0
+>>> [ 44.9s] TRIGGER: press ZR/RT slowly all the way down twice. Then press Enter
+[ 45.1s] trigger 2484 samples (827/s host) gyro p/y/r   +0.59   -0.30   -0.38 dps |a| 1.011 g  turned yaw +385.7 pitch +674.0  stickR      0  trigR      0
+[ 48.1s] trigger 2421 samples (807/s host) gyro p/y/r  -13.34   +1.24   -0.03 dps |a| 0.902 g  turned yaw +383.5 pitch +683.9  stickR      0  trigR      0
+[ 51.1s] trigger 2541 samples (846/s host) gyro p/y/r   -7.75   -1.87   -1.24 dps |a| 1.096 g  turned yaw +390.8 pitch +711.4  stickR      0  trigR      0
+[ 54.1s] trigger 2517 samples (839/s host) gyro p/y/r   +0.72   -0.63   -0.48 dps |a| 1.071 g  turned yaw +394.0 pitch +762.4  stickR      0  trigR  32767
+[ 57.1s] trigger 2442 samples (814/s host) gyro p/y/r   -0.57   -0.06   -0.35 dps |a| 1.069 g  turned yaw +395.7 pitch +811.3  stickR      0  trigR      0
+[ 60.1s] trigger 2436 samples (811/s host) gyro p/y/r   +0.53   -0.32   -0.42 dps |a| 1.078 g  turned yaw +398.0 pitch +861.1  stickR      0  trigR  32767
+[ 63.1s] trigger 2538 samples (846/s host) gyro p/y/r   -0.74   -0.25   +0.59 dps |a| 1.072 g  turned yaw +400.2 pitch +910.0  stickR      0  trigR      0
+>>> [ 63.2s] FREE: optional - disconnect and reconnect the controller. Press Enter to finish
+[ 66.1s] free    2394 samples (798/s host) gyro p/y/r   -1.71   -1.12   -0.81 dps |a| 1.079 g  turned yaw +404.9 pitch +954.4  stickR      0  trigR      0
+[ 69.1s] free    2496 samples (832/s host) gyro p/y/r   -2.40  -12.86   +1.65 dps |a| 1.173 g  turned yaw +445.6 pitch +996.6  stickR      0  trigR      0
+[ 72.1s] free    2424 samples (807/s host) gyro p/y/r  +33.29  +26.51  +18.79 dps |a| 1.103 g  turned yaw +362.4 pitch +1152.9  stickR   3635  trigR      0
+[ 75.1s] free    2460 samples (817/s host) gyro p/y/r  +96.05  +17.90   -3.15 dps |a| 0.894 g  turned yaw +310.1 pitch +1481.9  stickR      0  trigR      0
+[ 78.1s] free    2388 samples (796/s host) gyro p/y/r   +0.95  +33.34  +11.36 dps |a| 1.034 g  turned yaw +201.4 pitch +1532.6  stickR      0  trigR      0
+--- samples
+gyro samples: 65152 over 83.09 s (sample clock) -> 784.1 Hz
+sample dt ms: min 1.12  p50 1.22  p99 5.00  max 5.00  (non-positive: 0)
+arrival dt ms: p50 0.01  p99 9.26  max 59.56 (batching shows as 0 ms arrivals)
+--- rest (bias / noise / units)
+gyro mean dps: pitch -16.578  yaw +0.476  roll -2.469
+gyro sigma dps: pitch 44.997  yaw 27.673  roll 24.054
+accel |g| mean: 1.0773 (expect ~1.000)
+drift if uncalibrated: 28.5 deg/min yaw
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +377.7 deg, pitch +321.5 deg -> YAW SIGN OK, scale 1.049
+pitch step (expect +90): pitch +349.6 deg, yaw +7.8 deg -> PITCH SIGN OK, scale 3.884
+--- triggers / stick
+left_trigger: 2 distinct values -> DIGITAL
+right_trigger: 2 distinct values -> DIGITAL
+right stick max |value| during yaw/pitch: 3841 -> no motion-to-stick emulation seen
+--- events
+[  0.00s] ADDED id 1 "Nintendo Switch Pro Controller"
+--- ttmax-diag sdl finished (rc 0)
+=== ttmax-diag sdl  label pc-bt  2026-10-11 22:23:14  SDL 3.4.16
+waiting for an SDL gamepad...
+[  0.00s] REMOVED id 1
+gamepad: "Xbox One S Controller" type xboxone  045e:02fd  connection unknown  steam_handle 0
+    path XInput#0
+    gyro: no  rate 0.0 Hz
+    accel: no  rate 0.0 Hz
+[  0.00s] ADDED id 2 "Xbox One S Controller"
+>>> [  0.0s] REST: leave the controller still on the desk (8 s, advances by itself)
+[  0.0s] rest       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  3.0s] rest       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR   1960  trigR      0
+[  6.0s] rest       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+>>> [  8.0s] YAW: controller flat on the desk, turn it ONE FULL TURN (360) CLOCKWISE seen from above, back to the starting alignment. Then press Enter
+[  9.0s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 12.0s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 15.0s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 18.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR   1944  trigR      0
+[ 21.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR    840  trigR      0
+[ 24.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+>>> [ 26.3s] PITCH: lay it flat again, then raise the FRONT until it stands upright (90 deg, front to the ceiling). Hold and press Enter
+[ 27.1s] pitch      0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 30.1s] pitch      0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 33.1s] pitch      0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+>>> [ 35.2s] TRIGGER: press ZR/RT slowly all the way down twice. Then press Enter
+[ 36.1s] trigger    0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 39.1s] trigger    0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 42.1s] trigger    0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 45.2s] trigger    0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR    808  trigR  32767
+[ 48.2s] trigger    0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR    536  trigR      0
+>>> [ 48.4s] FREE: optional - disconnect and reconnect the controller. Press Enter to finish
+[ 51.2s] free       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR    296  trigR      0
+[ 54.2s] free       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 57.2s] free       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR    840  trigR      0
+--- samples
+gyro samples: 0 over 0.00 s (sample clock) -> 0.0 Hz
+sample dt ms: min 0.00  p50 0.00  p99 0.00  max 0.00  (non-positive: 0)
+arrival dt ms: p50 0.00  p99 0.00  max 0.00 (batching shows as 0 ms arrivals)
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +0.0 deg, pitch +0.0 deg -> no sensor, scale 0.000
+pitch step (expect +90): pitch +0.0 deg, yaw +0.0 deg -> no sensor, scale 0.000
+--- triggers / stick
+left_trigger: 73 distinct values -> ANALOG
+right_trigger: 88 distinct values -> ANALOG
+right stick max |value| during yaw/pitch: 1944 -> no motion-to-stick emulation seen
+--- events
+[  0.00s] REMOVED id 1
+[  0.00s] ADDED id 2 "Xbox One S Controller"
+--- ttmax-diag sdl finished (rc 0)
+=== ttmax-diag sdl  label switch-steam  2026-10-11 22:26:21  SDL 3.4.16
+waiting for an SDL gamepad...
+gamepad: "Nintendo Switch Pro Controller" type switchpro  057e:2009  wireless  steam_handle 0
+    path \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&0002057e_PID&2009#d&169de1b1&3&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+    gyro: YES  rate 200.0 Hz
+    accel: YES  rate 200.0 Hz
+[  0.00s] ADDED id 1 "Nintendo Switch Pro Controller"
+>>> [  0.0s] REST: leave the controller still on the desk (8 s, advances by itself)
+[  0.0s] rest       0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  3.0s] rest    2122 samples (707/s host) gyro p/y/r  -23.02   -1.06   -1.19 dps |a| 1.099 g  turned yaw   +0.0 pitch   +0.0  stickR   2515  trigR      0
+[  6.0s] rest    2100 samples (700/s host) gyro p/y/r   +0.22   -0.37   -0.41 dps |a| 1.083 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+>>> [  8.0s] YAW: controller flat on the desk, turn it ONE FULL TURN (360) CLOCKWISE seen from above, back to the starting alignment. Then press Enter
+[  9.0s] yaw     2532 samples (843/s host) gyro p/y/r   +0.22   -0.35   -0.40 dps |a| 1.086 g  turned yaw   -0.3 pitch   +8.3  stickR      0  trigR      0
+[ 12.0s] yaw     2487 samples (828/s host) gyro p/y/r   +0.22   -0.34   -0.41 dps |a| 1.090 g  turned yaw   -1.1 pitch  +33.2  stickR      0  trigR      0
+[ 15.0s] yaw     2559 samples (853/s host) gyro p/y/r   +0.22   -0.33   -0.41 dps |a| 1.089 g  turned yaw   -1.9 pitch  +58.8  stickR      0  trigR      0
+[ 18.0s] yaw     2573 samples (853/s host) gyro p/y/r   +0.19   -2.66   -0.71 dps |a| 1.093 g  turned yaw   +4.1 pitch  +83.8  stickR      0  trigR      0
+[ 21.0s] yaw     2494 samples (831/s host) gyro p/y/r   -0.60  -82.75  -11.56 dps |a| 1.094 g  turned yaw +247.0 pitch +106.2  stickR   2881  trigR      0
+[ 24.0s] yaw     2589 samples (863/s host) gyro p/y/r   -0.10  -30.95   -4.56 dps |a| 1.090 g  turned yaw +340.2 pitch +130.7  stickR   2881  trigR      0
+[ 27.0s] yaw     2547 samples (848/s host) gyro p/y/r   +0.24   -0.34   -0.41 dps |a| 1.088 g  turned yaw +339.4 pitch +155.8  stickR      0  trigR      0
+>>> [ 28.4s] PITCH: lay it flat again, then raise the FRONT until it stands upright (90 deg, front to the ceiling). Hold and press Enter
+[ 30.0s] pitch   2412 samples (804/s host) gyro p/y/r   +0.23   -0.52   -0.42 dps |a| 1.089 g  turned yaw +339.1 pitch +180.2  stickR      0  trigR      0
+[ 33.0s] pitch   2607 samples (869/s host) gyro p/y/r  +29.56   +0.88   -0.08 dps |a| 1.010 g  turned yaw +334.4 pitch +299.9  stickR      0  trigR      0
+>>> [ 33.4s] TRIGGER: press ZR/RT slowly all the way down twice. Then press Enter
+[ 36.0s] trigger 2499 samples (829/s host) gyro p/y/r  -30.26   +0.95   -3.46 dps |a| 1.097 g  turned yaw +329.6 pitch +231.9  stickR      0  trigR      0
+[ 39.0s] trigger 2532 samples (844/s host) gyro p/y/r   +1.05   -0.36   -0.58 dps |a| 0.950 g  turned yaw +328.9 pitch +259.3  stickR      0  trigR      0
+>>> [ 41.1s] FREE: optional - disconnect and reconnect the controller. Press Enter to finish
+[ 42.0s] free    2535 samples (845/s host) gyro p/y/r   -1.61   -0.75   +0.51 dps |a| 1.221 g  turned yaw +329.3 pitch +279.0  stickR      0  trigR      0
+[ 45.1s] free    2529 samples (842/s host) gyro p/y/r -107.64  -37.43   +9.37 dps |a| 1.154 g  turned yaw +438.9 pitch  -27.1  stickR      0  trigR      0
+--- samples
+gyro samples: 39334 over 51.48 s (sample clock) -> 764.0 Hz
+sample dt ms: min 1.13  p50 1.19  p99 5.00  max 5.00  (non-positive: 0)
+arrival dt ms: p50 0.01  p99 9.18  max 65.58 (batching shows as 0 ms arrivals)
+--- rest (bias / noise / units)
+gyro mean dps: pitch -8.143  yaw -0.612  roll -0.689
+gyro sigma dps: pitch 24.215  yaw 4.595  roll 3.239
+accel |g| mean: 1.0863 (expect ~1.000)
+drift if uncalibrated: 36.7 deg/min yaw
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +339.1 deg, pitch +166.1 deg -> YAW SIGN OK, scale 0.942
+pitch step (expect +90): pitch +138.5 deg, yaw -4.8 deg -> PITCH SIGN OK, scale 1.538
+--- triggers / stick
+left_trigger: 2 distinct values -> DIGITAL
+right_trigger: 2 distinct values -> DIGITAL
+right stick max |value| during yaw/pitch: 2881 -> no motion-to-stick emulation seen
+--- events
+[  0.00s] ADDED id 1 "Nintendo Switch Pro Controller"
+--- ttmax-diag sdl finished (rc 0)
+=== ttmax-diag steam  label switch-steam-api  2026-10-11 22:27:08  SDL 3.4.16
+Steam Input opened as Borderlands 4, waiting for a controller...
+no Steam Input controller within 60 s
+steam polls: 23393
+--- samples
+gyro samples: 0 over 0.00 s (sample clock) -> 0.0 Hz
+sample dt ms: min 0.00  p50 0.00  p99 0.00  max 0.00  (non-positive: 0)
+arrival dt ms: p50 0.00  p99 0.00  max 0.00 (batching shows as 0 ms arrivals)
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +0.0 deg, pitch +0.0 deg -> no sensor, scale 0.000
+pitch step (expect +90): pitch +0.0 deg, yaw +0.0 deg -> no sensor, scale 0.000
+--- events
+--- ttmax-diag steam finished (rc 0)
+=== ttmax-diag steam  label switch-steam-api  2026-10-11 22:28:46  SDL 3.4.16
+Steam Input opened as Borderlands 4, waiting for a controller...
+steam: 0 controllers connected after 1 polls
+steam: 0 controllers connected after 2595 polls
+steam: 0 controllers connected after 5195 polls
+steam: 0 controllers connected after 7806 polls
+steam: 0 controllers connected after 10406 polls
+steam: 0 controllers connected after 12992 polls
+steam: 0 controllers connected after 15597 polls
+steam: 0 controllers connected after 18188 polls
+steam: 0 controllers connected after 20780 polls
+steam: 0 controllers connected after 23371 polls
+steam: 0 controllers connected after 25965 polls
+steam: 0 controllers connected after 28567 polls
+no Steam Input controller within 60 s
+steam polls: 31162
+--- samples
+gyro samples: 0 over 0.00 s (sample clock) -> 0.0 Hz
+sample dt ms: min 0.00  p50 0.00  p99 0.00  max 0.00  (non-positive: 0)
+arrival dt ms: p50 0.00  p99 0.00  max 0.00 (batching shows as 0 ms arrivals)
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +0.0 deg, pitch +0.0 deg -> no sensor, scale 0.000
+pitch step (expect +90): pitch +0.0 deg, yaw +0.0 deg -> no sensor, scale 0.000
+--- events
+--- ttmax-diag steam finished (rc 0)
+=== ttmax-diag steam  label switch-steam-api  2026-10-11 22:29:59  SDL 3.4.16
+Steam Input opened as Borderlands 4, waiting for a controller (focus window created)...
+steam: 0 controllers connected after 1 polls, focus window FOREGROUND
+steam controller: handle 115453269065297 type 10 (SwitchProController), 1 connected
+[  0.00s] ADDED handle 115453269065297
+>>> [  0.0s] REST: leave the controller still on the desk (8 s, advances by itself)
+[  0.0s] rest       0 samples (-nan(ind)/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  3.0s] rest     743 samples (248/s host) gyro p/y/r   +0.16   -0.34   +0.41 dps |a| 1.094 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  6.0s] rest     760 samples (253/s host) gyro p/y/r   +0.17   -0.36   +0.40 dps |a| 1.089 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+>>> [  8.0s] YAW: controller flat on the desk, turn it ONE FULL TURN (360) CLOCKWISE seen from above, back to the starting alignment. Then press Enter
+[  9.0s] yaw      743 samples (248/s host) gyro p/y/r   +0.15   -0.34   +0.40 dps |a| 1.087 g  turned yaw   -0.0 pitch   +0.0  stickR      0  trigR      0
+[ 12.0s] yaw      769 samples (256/s host) gyro p/y/r   +0.16   -0.35   +0.41 dps |a| 1.089 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 15.0s] yaw      781 samples (260/s host) gyro p/y/r   +0.18   -0.35   +0.40 dps |a| 1.085 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 18.0s] yaw      784 samples (261/s host) gyro p/y/r   +0.16   -0.36   +0.41 dps |a| 1.090 g  turned yaw   +0.1 pitch   +0.0  stickR      0  trigR      0
+[ 21.0s] yaw      610 samples (203/s host) gyro p/y/r   +0.17   -0.35   +0.41 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 24.0s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 27.0s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 30.0s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 33.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 36.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 39.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.1  stickR      0  trigR      0
+[ 42.1s] yaw      651 samples (217/s host) gyro p/y/r   +0.17   -0.36   +0.41 dps |a| 1.088 g  turned yaw   +0.1 pitch   +0.1  stickR      0  trigR      0
+[ 45.1s] yaw      769 samples (256/s host) gyro p/y/r   +0.17   -0.37   +0.40 dps |a| 1.085 g  turned yaw   +0.1 pitch   +0.1  stickR      0  trigR      0
+[ 48.1s] yaw      818 samples (272/s host) gyro p/y/r   +0.17   -0.34   +0.40 dps |a| 1.088 g  turned yaw   +0.1 pitch   +0.1  stickR      0  trigR      0
+[ 51.1s] yaw      735 samples (245/s host) gyro p/y/r   +0.17   -0.36   +0.39 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 54.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 57.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 60.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 63.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 66.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 69.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 72.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 75.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 78.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 81.1s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 84.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 87.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 90.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 93.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 96.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[ 99.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[102.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+[105.2s] yaw        0 samples (0/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.2 pitch   +0.1  stickR      0  trigR      0
+=== ttmax-diag steam  label switch-steam-api  2026-10-11 22:34:43  SDL 3.4.16
+Steam Input opened as Borderlands 4, waiting for a controller (focus window created)...
+steam: 1 controllers connected after 1 polls, focus window FOREGROUND
+steam controller: handle 115453269065297 type 10 (SwitchProController), 1 connected
+[  0.00s] ADDED handle 115453269065297
+>>> [  0.0s] REST: leave the controller still on the desk (8 s, advances by itself)
+[  0.0s] rest       0 samples (-nan(ind)/s host) gyro p/y/r   +0.00   +0.00   +0.00 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  3.5s] rest     601 samples (170/s host) gyro p/y/r   +0.16   -0.37   -0.41 dps |a| 1.094 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[  6.5s] rest     110 samples (37/s host) gyro p/y/r   +0.14   -0.33   -0.39 dps |a| 0.000 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+>>> [  8.0s] YAW: controller flat on the desk, turn it ONE FULL TURN (360) CLOCKWISE seen from above, back to the starting alignment. Then press Enter
+[  9.5s] yaw      412 samples (137/s host) gyro p/y/r   +0.15   -0.37   -0.41 dps |a| 1.093 g  turned yaw   +0.0 pitch   -0.0  stickR      0  trigR      0
+[ 12.5s] yaw      800 samples (267/s host) gyro p/y/r   +0.16   -0.37   -0.40 dps |a| 1.095 g  turned yaw   +0.0 pitch   -0.0  stickR      0  trigR      0
+>>> [ 14.3s] PITCH: lay it flat again, then raise the FRONT until it stands upright (90 deg, front to the ceiling). Hold and press Enter
+[ 15.5s] pitch    753 samples (251/s host) gyro p/y/r   +0.16   -0.38   -0.40 dps |a| 1.081 g  turned yaw   +0.0 pitch   +0.0  stickR      0  trigR      0
+[ 18.5s] pitch    804 samples (268/s host) gyro p/y/r  +23.99   -0.07   -0.65 dps |a| 1.029 g  turned yaw   +0.4 pitch  +68.2  stickR      0  trigR      0
+[ 21.5s] pitch    754 samples (251/s host) gyro p/y/r   +5.58   -0.12   -0.46 dps |a| 1.009 g  turned yaw   -0.3 pitch  +84.9  stickR      0  trigR      0
+>>> [ 22.2s] TRIGGER: press ZR/RT slowly all the way down twice. Then press Enter
+[ 24.5s] trigger  770 samples (257/s host) gyro p/y/r   -1.68   -0.38   -0.50 dps |a| 1.004 g  turned yaw   -0.2 pitch  +80.7  stickR      0  trigR      0
+[ 27.5s] trigger  768 samples (256/s host) gyro p/y/r   -1.35   +0.12   -1.80 dps |a| 1.027 g  turned yaw   -1.4 pitch  +75.7  stickR      0  trigR      0
+>>> [ 30.4s] FREE: optional - disconnect and reconnect the controller. Press Enter to finish
+[ 30.5s] free     753 samples (251/s host) gyro p/y/r   -0.62   -0.24   -0.74 dps |a| 1.026 g  turned yaw   -1.7 pitch  +73.9  stickR      0  trigR      0
+[ 33.5s] free     793 samples (264/s host) gyro p/y/r  -18.35  -68.04 -100.24 dps |a| 0.809 g  turned yaw +187.9 pitch  +18.2  stickR      0  trigR      0
+[ 36.5s] free     733 samples (244/s host) gyro p/y/r  +29.44  +42.47  -40.87 dps |a| 1.042 g  turned yaw  +73.7 pitch +102.5  stickR      0  trigR      0
+steam polls: 19070
+--- samples
+gyro samples: 8442 over 38.10 s (sample clock) -> 221.5 Hz
+sample dt ms: min 1.03  p50 2.53  p99 28.51  max 3929.33  (non-positive: 0)
+arrival dt ms: p50 2.53  p99 28.51  max 3929.33 (batching shows as 0 ms arrivals)
+--- rest (bias / noise / units)
+gyro mean dps: pitch +0.158  yaw -0.362  roll -0.404
+gyro sigma dps: pitch 0.055  yaw 0.105  roll 0.061
+accel |g| mean: 1.0867 (expect ~1.000)
+drift if uncalibrated: 21.7 deg/min yaw
+--- sign / scale checks (bias-corrected, camera convention: yaw right +, pitch up +)
+yaw step (expect +360): yaw +0.0 deg, pitch -0.0 deg -> YAW SIGN OK, scale 0.000
+pitch step (expect +90): pitch +84.7 deg, yaw -0.4 deg -> PITCH SIGN OK, scale 0.941
+--- events
+[  0.00s] ADDED handle 115453269065297
+--- ttmax-diag steam finished (rc 0)

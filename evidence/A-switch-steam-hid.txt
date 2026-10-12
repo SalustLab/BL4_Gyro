@@ -1,0 +1,43 @@
+=== ttmax-diag hid  label switch-steam-hid  2026-10-11 22:26:20  SDL 3.4.16
+373b:103d usage 0001:0002 if 2 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_02#a&aee55d&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage 0001:0006 if 0 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_00#a&270f1dd9&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\KBD
+41e4:2116 usage 0001:0006 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col01#8&33da9c46&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\KBD
+373b:103d usage ff05:0000 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col01#a&13df019b&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage ff03:0000 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col02#a&13df019b&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage 000c:0001 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col03#a&13df019b&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage 0001:0080 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col04#a&13df019b&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage ff02:0002 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col05#a&13df019b&0&0004#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0006 if 0 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_00#8&27c6eac9&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\KBD
+373b:103d usage ff04:0002 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col06#a&13df019b&0&0005#{4d1e55b2-f16f-11cf-88cb-001111000030}
+373b:103d usage ff06:0002 if 1 bus USB  "Compx" / "ATK X1 Ultimate"
+    \\?\HID#VID_373B&PID_103D&MI_01&Col07#a&13df019b&0&0006#{4d1e55b2-f16f-11cf-88cb-001111000030}
+048d:5711 usage ff89:0010 if 1 bus USB  "ITE Tech. Inc." / "GIGABYTE Device "
+    \\?\HID#VID_048D&PID_5711&MI_01&Col01#a&30f861b2&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+048d:5711 usage 0059:0001 if 0 bus USB  "ITE Tech. Inc." / "GIGABYTE Device "
+    \\?\HID#VID_048D&PID_5711&MI_00#a&88db3e9&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+048d:5711 usage ff89:00cc if 1 bus USB  "ITE Tech. Inc." / "GIGABYTE Device "
+    \\?\HID#VID_048D&PID_5711&MI_01&Col02#a&30f861b2&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0000 if 1 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_01#8&10035e84&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0002 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col02#8&33da9c46&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 000c:0001 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col03#8&33da9c46&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:0080 if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col04#8&33da9c46&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030}
+41e4:2116 usage 0001:000c if 2 bus USB  "MCHOSE" / "Ace68-II"
+    \\?\HID#VID_41E4&PID_2116&MI_02&Col05#8&33da9c46&0&0004#{4d1e55b2-f16f-11cf-88cb-001111000030}
+057e:2009 usage 0001:0005 if -1 bus BT  "Nintendo" / "Wireless Gamepad"
+    \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&0002057e_PID&2009#d&169de1b1&3&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+    report descriptor: 213 bytes: 05 01 09 05 a1 01 85 21 06 01 ff 09 21 15 00 25 00 75 08 95 30 81 02 85 ...
+20 HID interfaces
