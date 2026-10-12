@@ -1,0 +1,13 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "CMAKE_CXX_COMPILER": "cl" }
+    }
+  ],
+  "buildPresets": [ { "name": "release", "configurePreset": "release" } ],
+  "testPresets": [ { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } } ]
+}
