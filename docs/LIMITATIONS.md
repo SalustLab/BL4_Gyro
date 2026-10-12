@@ -39,6 +39,6 @@
 
 ## Projeto
 
-- Sensibilidade padrão 1,25 e smoothing/tightening desligados são valores iniciais escolhidos por um único testador,
+- Sensibilidade padrão 2,0 (o testador joga em 3,0) e smoothing/tightening desligados são valores escolhidos por um único testador,
   não parâmetros validados de forma geral.
 - Modos ADS-only, Hip-only, Hold, Toggle, Ratchet, World Space e Flick Stick ainda não existem (Fase E).

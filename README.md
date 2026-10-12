@@ -31,7 +31,7 @@ automática só roda com o jogo pausado ou em menus, nunca durante a mira. Tamb�
 
 | Opção | Padrão | Efeito |
 |---|---|---|
-| Horizontal / Vertical sensitivity | 1,25 | graus de câmera por grau de controle |
+| Horizontal / Vertical sensitivity | 2,0 | graus de câmera por grau de controle (o testador usa 3,0) |
 | ADS sensitivity multiplier | 1,0 | multiplica as duas sensibilidades mirando |
 | Invert horizontal / vertical | Off | |
 | Gyro space | Player | Player: girar funciona como você segurar o controle; Local: só o eixo do próprio controle |
