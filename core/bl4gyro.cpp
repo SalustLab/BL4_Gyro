@@ -86,7 +86,7 @@ struct Config {
 std::mutex g_cfg_mutex;
 Config g_cfg;
 std::atomic<bool> g_cfg_dirty{true};
-gyro::Accumulator g_acc;
+gyro::Pacer g_pacer;
 std::atomic<bool> g_run{false};
 std::atomic<double> g_calibrate{0};
 std::thread g_thread;
@@ -163,7 +163,7 @@ void replay_loop(const std::string& path)
             const gyro::Delta d = proc.process(samples[i++]);
             total.yaw_deg += d.yaw_deg;
             total.pitch_deg += d.pitch_deg;
-            g_acc.add(d);
+            g_pacer.add(d, now_s());
         }
         ticker.wait_ms(1);
     }
@@ -208,7 +208,7 @@ void steam_loop()
                 const steam::MotionData m = input.motion(active);
                 if (steam::has_data(m) && std::memcmp(&m, &prev, sizeof m) != 0) {
                     prev = m;
-                    g_acc.add(proc.process(gyro::from_steam(now, m.rot_vel, m.pos_accel)));
+                    g_pacer.add(proc.process(gyro::from_steam(now, m.rot_vel, m.pos_accel)), now);
                     ++packets;
                     trace("P,%.6f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.7f,%.7f,%.7f,%.7f\n", now, m.rot_vel[0], m.rot_vel[1],
                           m.rot_vel[2], m.pos_accel[0], m.pos_accel[1], m.pos_accel[2], m.rot_quat[0], m.rot_quat[1],
@@ -262,7 +262,7 @@ BL4GYRO_API int bl4gyro_start(const wchar_t* log_path, const char* replay_csv)
         g_dir.erase(g_dir.find_last_of(L"\\/") + 1);
     }
     g_replay_csv = replay_csv ? replay_csv : "";
-    g_acc.take();
+    g_pacer.take(1e18); // drop anything left from a previous run
     g_cfg_dirty = true;
     g_run = true;
     g_thread = std::thread(sensor_thread);
@@ -312,7 +312,7 @@ BL4GYRO_API void bl4gyro_calibrate(double seconds) { g_calibrate = seconds; }
 // Camera delta in degrees (yaw right +, pitch up +) accumulated since the last call.
 BL4GYRO_API void bl4gyro_take(int ads, double* yaw_deg, double* pitch_deg)
 {
-    const gyro::Delta d = gyro::to_camera(g_acc.take(), config().camera, ads != 0);
+    const gyro::Delta d = gyro::to_camera(g_pacer.take(now_s()), config().camera, ads != 0);
     *yaw_deg = d.yaw_deg;
     *pitch_deg = d.pitch_deg;
     trace("T,%.6f,%d,%.5f,%.5f\n", now_s(), ads, d.yaw_deg, d.pitch_deg);

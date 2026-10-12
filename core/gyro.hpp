@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cstdint>
+#include <deque>
 #include <mutex>
 
 #include "GamepadMotion.hpp"
@@ -61,14 +62,22 @@ private:
     bool has_prev_ = false;
 };
 
-// Sensor thread adds, game thread takes once per frame.
-class Accumulator {
+// Hand-off from the sensor thread to the game thread. Each motion packet's rotation is released linearly over the
+// typical packet interval instead of all at once: in game Steam delivers ~48 packets/s against ~53 frames/s, and
+// unpaced hand-off left ~40% of frames without rotation (judder). Nothing is lost; added latency <= one interval.
+class Pacer {
 public:
-    void add(const Delta& d);
-    Delta take(); // returns everything added since the last take
+    void add(const Delta& d, double t_s); // sensor thread, at packet arrival
+    Delta take(double now_s);             // game thread: rotation due by now
 private:
+    struct Segment {
+        Delta d;
+        double t0, t1, done;
+    };
     std::mutex mutex_;
-    Delta sum_;
+    std::deque<Segment> pending_;
+    double last_add_ = -1;
+    double interval_ = 0.02;
 };
 
 struct Camera {
