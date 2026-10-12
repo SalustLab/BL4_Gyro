@@ -114,17 +114,28 @@ void Processor::reset()
     motion_.ResetMotion();
 }
 
-void Accumulator::add(const Delta& d)
+void Pacer::add(const Delta& d, double t_s)
 {
     std::lock_guard lock(mutex_);
-    sum_.yaw_deg += d.yaw_deg;
-    sum_.pitch_deg += d.pitch_deg;
+    const double gap = t_s - last_add_;
+    if (last_add_ >= 0 && gap > 0 && gap < kMaxGapS) // learn the packet interval, ignoring stalls
+        interval_ += (std::clamp(gap, 0.004, 0.05) - interval_) * 0.1;
+    last_add_ = t_s;
+    if (d.yaw_deg != 0 || d.pitch_deg != 0) pending_.push_back({d, t_s, t_s + interval_, 0});
 }
 
-Delta Accumulator::take()
+Delta Pacer::take(double now_s)
 {
     std::lock_guard lock(mutex_);
-    return std::exchange(sum_, Delta{});
+    Delta out;
+    for (Segment& s : pending_) {
+        const double f = std::clamp((now_s - s.t0) / (s.t1 - s.t0), 0.0, 1.0);
+        out.yaw_deg += s.d.yaw_deg * (f - s.done);
+        out.pitch_deg += s.d.pitch_deg * (f - s.done);
+        s.done = f;
+    }
+    while (!pending_.empty() && pending_.front().done >= 1.0) pending_.pop_front();
+    return out;
 }
 
 Delta to_camera(const Delta& controller, const Camera& camera, bool ads)
