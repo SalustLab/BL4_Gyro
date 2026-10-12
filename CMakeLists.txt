@@ -30,3 +30,12 @@ add_executable(ttmax-diag diag/ttmax_diag.cpp)
 target_link_libraries(ttmax-diag PRIVATE gyro_core SDL3::SDL3 winmm)
 add_custom_command(TARGET ttmax-diag POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:ttmax-diag>)
+
+# The in-game half: loaded by the NativeGyro sdkmod through ctypes.
+add_library(bl4gyro SHARED core/bl4gyro.cpp)
+target_link_libraries(bl4gyro PRIVATE gyro_core)
+
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME dll_replay COMMAND Python3::Interpreter -I ${CMAKE_SOURCE_DIR}/tests/dll_replay_check.py $<TARGET_FILE:bl4gyro>)
+endif()
