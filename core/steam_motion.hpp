@@ -19,6 +19,12 @@ struct MotionData {
 
 using Handle = std::uint64_t;
 
+// Steam returns an all-zero packet while the app's window is not focused (measured, evidence/A-switch-steam-api).
+inline bool has_data(const MotionData& m)
+{
+    return m.rot_quat[0] != 0 || m.rot_quat[1] != 0 || m.rot_quat[2] != 0 || m.rot_quat[3] != 0;
+}
+
 class Input {
 public:
     // dll_path is only used when steam_api64.dll is not loaded yet; init_api calls SteamAPI_Init.
@@ -39,6 +45,7 @@ private:
     int (*type_)(void*, Handle) = nullptr;
     MotionData (*motion_)(void*, Handle) = nullptr;
     void (*api_shutdown_)() = nullptr;
+    void (*run_callbacks_)() = nullptr; // only pumped when we own the API (the game pumps its own)
 };
 
 const char* type_name(int steam_input_type);

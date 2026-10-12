@@ -34,7 +34,7 @@ Sample from_steam(double host_s, const float rot_vel[3], const float pos_accel[3
     s.t_s = host_s;
     s.gyro_dps[0] = rot_vel[0] * kSteamDpsPerUnit;
     s.gyro_dps[1] = rot_vel[2] * kSteamDpsPerUnit;
-    s.gyro_dps[2] = -rot_vel[1] * kSteamDpsPerUnit;
+    s.gyro_dps[2] = rot_vel[1] * kSteamDpsPerUnit; // measured on TT Max: Steam roll already matches SDL's sign
     s.accel_g[0] = pos_accel[0] * kSteamGPerUnit;
     s.accel_g[1] = pos_accel[2] * kSteamGPerUnit;
     s.accel_g[2] = -pos_accel[1] * kSteamGPerUnit;

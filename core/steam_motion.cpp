@@ -37,6 +37,7 @@ bool Input::open(const wchar_t* dll_path, bool init_api, std::string& error)
     if (init_api) {
         resolve(module, "SteamAPI_Init", api_init, missing);
         resolve(module, "SteamAPI_Shutdown", api_shutdown_, missing);
+        resolve(module, "SteamAPI_RunCallbacks", run_callbacks_, missing);
     }
     if (!missing.empty()) {
         error = "steam_api64.dll lacks exports: " + missing;
@@ -73,6 +74,7 @@ void Input::close()
 std::vector<Handle> Input::controllers()
 {
     Handle handles[kMaxControllers] = {};
+    if (owns_api_) run_callbacks_();
     run_frame_(input_, false);
     const int count = connected_(input_, handles);
     return {handles, handles + (count > 0 ? count : 0)};
