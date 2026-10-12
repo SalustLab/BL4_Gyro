@@ -3,6 +3,8 @@
 
 #include <cmath>
 #include <cstdio>
+#include <atomic>
+#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -123,15 +125,16 @@ static double consume_two_seconds_at(double frame_hz)
 {
     // 200 Hz sensor at 45 dps for 2 s, drained by a game running at frame_hz.
     gyro::Processor p(plain_settings());
-    gyro::Pacer pacer;
+    gyro::RateHold hold;
     double total = 0, next_frame = 1.0 / frame_hz;
-    p.process(flat_sample(0.0, 0.f, -45.f));
-    for (int i = 1; i <= 400; ++i) {
+    for (int i = 0; i <= 400; ++i) {
         const double t = i * 0.005;
-        pacer.add(p.process(flat_sample(t, 0.f, -45.f)), t);
-        while (next_frame <= t) { total += pacer.take(next_frame).yaw_deg; next_frame += 1.0 / frame_hz; }
+        p.process(flat_sample(t, 0.f, -45.f));
+        hold.set(p.rate(), t);
+        while (next_frame <= t) { total += hold.take(next_frame).yaw_deg; next_frame += 1.0 / frame_hz; }
     }
-    return total + pacer.take(100.0).yaw_deg;
+    hold.set({}, 2.005); // stream ends one sample period after the last sample
+    return total + hold.take(100.0).yaw_deg;
 }
 
 static void total_rotation_does_not_depend_on_frame_rate()
@@ -141,61 +144,85 @@ static void total_rotation_does_not_depend_on_frame_rate()
     CHECK(near(consume_two_seconds_at(144), 90.0, 1e-6));
 }
 
-static void pacer_is_safe_across_threads()
+static void rate_hold_is_safe_across_threads()
 {
-    gyro::Pacer pacer;
-    double taken = 0;
-    std::thread producer([&] { for (int i = 0; i < 100000; ++i) pacer.add({0.001, -0.002}, i * 1e-4); });
-    for (int i = 0; i < 1000; ++i) taken += pacer.take(i * 0.01).yaw_deg;
+    // Both threads use one real clock, like the sensor thread and the game thread in the DLL.
+    using clock = std::chrono::steady_clock;
+    const auto t0 = clock::now();
+    auto secs = [&] { return std::chrono::duration<double>(clock::now() - t0).count(); };
+    gyro::RateHold hold;
+    std::atomic<bool> producing{true};
+    double first = -1, last = 0, taken = 0;
+    std::thread producer([&] {
+        while (secs() < 0.3) {
+            last = secs();
+            if (first < 0) first = last;
+            hold.set({10.0, 0}, last);
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        producing = false;
+    });
+    while (producing) taken += hold.take(secs()).yaw_deg;
     producer.join();
-    taken += pacer.take(1e9).yaw_deg;
-    CHECK(near(taken, 100.0, 1e-6));
+    taken += hold.take(last).yaw_deg;
+    // 10 dps from the first update on; the last rate is held (at most RateHold::kHoldS) until the final take.
+    const double expected = 10.0 * (last - first);
+    CHECK(taken >= expected - 1e-6 && taken <= expected + 10.0 * gyro::RateHold::kHoldS + 1e-6);
 }
 
-// In game, Steam updates motion once per game frame (~48 Hz, evidence/C-trace-1.csv) while frames run at ~53 Hz:
-// handing each packet to the next frame leaves ~40% of frames with no rotation (judder). Pacing spreads each
-// packet over the packet interval.
-static void paced_delivery_is_smooth_when_packets_and_frames_beat()
+// In game Steam updates motion ~48 times/s against ~49-53 frames/s, with a 40-60 ms gap about twice a second
+// (evidence/C-trace-2-paced.csv). Frames integrate the latest angular velocity, so neither the beat nor the gaps
+// show up as empty frames or catch-up bursts.
+static void held_rate_is_smooth_through_packet_gaps()
 {
-    gyro::Pacer pacer;
+    gyro::RateHold hold;
     const double rate = 90.0;
-    double t_packet = 0, t_frame = 0, last_packet = 0;
+    double t_packet = 0, t_frame = 0, total = 0;
     int n = 0;
     std::vector<double> frame_deltas;
-    double total = 0;
     while (t_frame < 3.0) {
         if (t_packet <= t_frame) {
-            pacer.add({rate * (t_packet - last_packet), 0}, t_packet);
-            last_packet = t_packet;
-            t_packet += 0.0206 + 0.001 * std::sin(1.7 * ++n); // +-1 ms arrival jitter
+            hold.set({rate, 0}, t_packet);
+            ++n;
+            const int missing = (n % 10 == 0) + (n % 37 == 0); // dropped updates, as measured in game
+            t_packet += (0.0206 + 0.001 * std::sin(1.7 * n)) * (1 + missing);
         } else {
-            const double d = pacer.take(t_frame).yaw_deg;
+            const double d = hold.take(t_frame).yaw_deg;
             total += d;
             if (t_frame > 0.5) frame_deltas.push_back(d);
             t_frame += 1.0 / 53;
         }
     }
-    total += pacer.take(10.0).yaw_deg; // everything is released eventually
     double mean = 0, var = 0;
     for (double d : frame_deltas) mean += d / frame_deltas.size();
     for (double d : frame_deltas) var += (d - mean) * (d - mean) / frame_deltas.size();
     const double cv = std::sqrt(var) / mean;
-    std::printf("info: paced per-frame delta mean %.3f deg, coefficient of variation %.3f\n", mean, cv);
-    CHECK(cv < 0.15);                              // unpaced: ~0.8 (40% empty frames)
-    CHECK(near(total, rate * last_packet, 1e-6));  // nothing lost or duplicated
+    std::printf("info: held-rate per-frame delta mean %.3f deg, coefficient of variation %.4f\n", mean, cv);
+    CHECK(cv < 0.02);
+    CHECK(near(total, rate * (t_frame - 1.0 / 53), 0.5));
 }
 
-static void paced_delivery_releases_a_packet_within_one_interval()
+// The sensor thread stamps a packet before the game thread may take: a set() stamped earlier than the last take
+// must not count that slice twice (found by tests/dll_replay_check.py: 181.2 deg instead of 180 at 144 fps).
+static void late_rate_update_is_not_counted_twice()
 {
-    gyro::Pacer pacer;
-    for (int i = 0; i <= 10; ++i) pacer.add({1.0, -0.5}, i * 0.02); // learns a ~20 ms packet interval
-    pacer.take(0.2 + 1.0);                                            // drain
-    pacer.add({4.0, 2.0}, 2.0);
-    CHECK(near(pacer.take(2.0).yaw_deg, 0.0));
-    const gyro::Delta half = pacer.take(2.01);
-    CHECK(near(half.yaw_deg, 2.0, 1e-6) && near(half.pitch_deg, 1.0, 1e-6));
-    const gyro::Delta rest = pacer.take(2.03);
-    CHECK(near(rest.yaw_deg, 2.0, 1e-6) && near(rest.pitch_deg, 1.0, 1e-6));
+    gyro::RateHold hold;
+    hold.set({10.0, 0}, 0.0);
+    hold.set({10.0, 0}, 0.05);
+    double total = hold.take(0.08).yaw_deg;
+    hold.set({10.0, 0}, 0.075); // stamped before the take at 0.08
+    total += hold.take(0.1).yaw_deg;
+    CHECK(near(total, 1.0, 1e-9));
+}
+
+static void held_rate_stops_shortly_after_updates_stop()
+{
+    gyro::RateHold hold;
+    for (int i = 0; i < 10; ++i) hold.set({10.0, 0}, i * 0.05); // steady stream, 20 updates/s
+    hold.set({30.0, -20.0}, 0.5);              // a new rate applies from its arrival, then updates stop
+    const gyro::Delta d = hold.take(5.0);      // controller gone (focus lost, disconnect): hold only 100 ms
+    CHECK(near(d.yaw_deg, 10.0 * 0.5 + 30.0 * 0.1, 1e-9) && near(d.pitch_deg, -2.0, 1e-9));
+    CHECK(near(hold.take(6.0).yaw_deg, 0.0));
 }
 
 static void camera_delta_applies_sensitivity_ads_and_inversion()
@@ -350,10 +377,11 @@ int main()
     player_space_recovers_world_turn_with_tilted_controller();
     gaps_and_out_of_order_samples_are_not_integrated();
     total_rotation_does_not_depend_on_frame_rate();
-    pacer_is_safe_across_threads();
+    rate_hold_is_safe_across_threads();
     camera_delta_applies_sensitivity_ads_and_inversion();
-    paced_delivery_is_smooth_when_packets_and_frames_beat();
-    paced_delivery_releases_a_packet_within_one_interval();
+    held_rate_is_smooth_through_packet_gaps();
+    held_rate_stops_shortly_after_updates_stop();
+    late_rate_update_is_not_counted_twice();
     auto_calibration_removes_bias_at_rest_but_keeps_real_turns();
     manual_calibration_measures_bias_and_mutes_output_meanwhile();
     slow_pan_is_kept_while_auto_calibration_is_suspended();

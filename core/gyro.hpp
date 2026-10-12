@@ -3,7 +3,6 @@
 #pragma once
 
 #include <cstdint>
-#include <deque>
 #include <mutex>
 
 #include "GamepadMotion.hpp"
@@ -46,6 +45,7 @@ public:
     explicit Processor(const Settings& settings = {});
     void configure(const Settings& settings);
     Delta process(const Sample& s); // rotation since the previous sample; zero across gaps
+    Delta rate() const { return rate_; } // angular velocity of the last processed sample (deg/s, camera convention)
     void reset();
     // Manual calibration: the controller must be still; output is muted while it runs.
     void calibrate(double seconds);
@@ -58,26 +58,26 @@ private:
     Settings settings_;
     double calibration_left_s_ = 0;
     float smoothed_[2] = {};
+    Delta rate_;
     double prev_t_ = 0;
     bool has_prev_ = false;
 };
 
-// Hand-off from the sensor thread to the game thread. Each motion packet's rotation is released linearly over the
-// typical packet interval instead of all at once: in game Steam delivers ~48 packets/s against ~53 frames/s, and
-// unpaced hand-off left ~40% of frames without rotation (judder). Nothing is lost; added latency <= one interval.
-class Pacer {
+// Hand-off from the sensor thread to the game thread: the latest calibrated angular velocity (deg/s, camera
+// convention), integrated forward in time whenever the game takes. In game Steam updates motion ~48 times/s with
+// a 40-60 ms gap about twice a second while frames run at ~49-53/s; integrating the held rate at frame time keeps
+// every frame moving (no empty frames, no catch-up bursts) and adds no latency. A rate is held for at most
+// kHoldS after its update, so a stalled or unfocused controller stops the camera.
+class RateHold {
 public:
-    void add(const Delta& d, double t_s); // sensor thread, at packet arrival
-    Delta take(double now_s);             // game thread: rotation due by now
+    static constexpr double kHoldS = 0.1;
+    void set(const Delta& rate_dps, double t_s); // sensor thread, at packet arrival
+    Delta take(double now_s);                   // game thread: rotation since the previous take
 private:
-    struct Segment {
-        Delta d;
-        double t0, t1, done;
-    };
+    void advance(double t_s);
     std::mutex mutex_;
-    std::deque<Segment> pending_;
-    double last_add_ = -1;
-    double interval_ = 0.02;
+    Delta rate_, pending_;
+    double t_rate_ = 0, t_mark_ = 0;
 };
 
 struct Camera {
