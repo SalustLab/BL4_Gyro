@@ -27,7 +27,7 @@ enum class Space { Local, Player };
 
 struct Settings {
     Space space = Space::Player;
-    bool auto_calibrate = true; // GamepadMotionHelpers Stillness|SensorFusion
+    bool auto_calibrate = true; // GamepadMotionHelpers Stillness; the mod enables it only while the game gate is closed
     float tighten_dps = 0;      // below this speed output is scaled down linearly (0 = off)
     float smooth_dps = 0;       // tiered smoothing: fully smoothed below half of this, direct above (0 = off)
 };

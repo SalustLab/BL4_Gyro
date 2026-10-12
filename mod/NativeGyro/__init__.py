@@ -31,7 +31,7 @@ TESTED_BUILD = "25372571"
 SAME_UPDATE_S = 0.001  # the hook fires once per camera modifier; one pass per camera update is enough
 
 _dll: ctypes.CDLL | None = None
-_state = {"last": 0.0, "errors": 0, "statics": None, "character": None}
+_state = {"last": 0.0, "errors": 0, "statics": None, "character": None, "gate_open": False}
 
 
 def _set(key: str, value: float) -> None:
@@ -59,8 +59,13 @@ space = SpinnerOption("Gyro space", "Player", ["Player", "Local"],
                                   "Local: only the controller's own yaw axis.",
                       on_change_anytime=lambda _o, v: _set("player_space", v == "Player"))
 auto_calibrate = BoolOption("Automatic calibration", True,
-                            description="Continuously removes gyro drift whenever the controller is still.",
-                            on_change_anytime=_setter("auto_calibrate", int))
+                            description="While a menu, the map or the pause screen is open, removes gyro drift whenever "
+                                        "the controller lies still (e.g. on the desk). Never runs while you aim.",
+                            on_change_anytime=lambda _o, v: _apply_auto_calibration(v))
+debug_trace = BoolOption("Debug trace", False,
+                         description="Writes trace.csv in the mod folder (motion packets, camera deltas, ControlRotation "
+                                     "per frame) for diagnosis. Leave off for play.",
+                         on_change_anytime=_setter("trace", int))
 tighten = SliderOption("Tightening (deg/s)", 0.0, 0.0, 10.0, 0.5, False,
                        description="Slows only very small motions below this speed. 0 = off.",
                        on_change_anytime=_setter("tighten_dps"))
@@ -89,6 +94,12 @@ def _status() -> str:
     return buf.value.decode(errors="replace")
 
 
+def _apply_auto_calibration(enabled: bool) -> None:
+    # Stillness calibration during aiming eats slow, steady motion (24 deg pan -> 8.5 deg in tests/core_tests.cpp),
+    # so it only runs while the gate is closed.
+    _set("auto_calibrate", enabled and not _state["gate_open"])
+
+
 def _push_settings() -> None:
     _set("sens_x", sens_x.value)
     _set("sens_y", sens_y.value)
@@ -96,9 +107,10 @@ def _push_settings() -> None:
     _set("invert_x", invert_x.value)
     _set("invert_y", invert_y.value)
     _set("player_space", space.value == "Player")
-    _set("auto_calibrate", auto_calibrate.value)
+    _apply_auto_calibration(auto_calibrate.value)
     _set("tighten_dps", tighten.value)
     _set("smooth_dps", smoothing.value)
+    _set("trace", debug_trace.value)
 
 
 def _load_dll() -> ctypes.CDLL:
@@ -111,6 +123,7 @@ def _load_dll() -> ctypes.CDLL:
     dll.bl4gyro_take.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
     dll.bl4gyro_status.argtypes = [ctypes.c_char_p, ctypes.c_int]
     dll.bl4gyro_status.restype = ctypes.c_int
+    dll.bl4gyro_trace_line.argtypes = [ctypes.c_char_p]
     return dll
 
 
@@ -140,9 +153,16 @@ def _on_camera_update(_obj, _args, _ret, _func) -> None:
         ads = on_foot and int(pawn.ZoomState.State) in ADS_STATES
         # Always drain, so motion made while the gate is closed (menus, pause, vehicles) never jumps in later.
         _dll.bl4gyro_take(int(ads), ctypes.byref(_YAW), ctypes.byref(_PITCH))
-        if not on_foot or pc.bShowMouseCursor or pc.IsLookInputIgnored():
-            return
-        if _state["statics"].IsGamePaused(pc) or pc.GetViewTarget() != pawn:
+        gate_open = (on_foot and not pc.bShowMouseCursor and not pc.IsLookInputIgnored()
+                     and not _state["statics"].IsGamePaused(pc) and pc.GetViewTarget() == pawn)
+        if gate_open != _state["gate_open"]:
+            _state["gate_open"] = gate_open
+            _apply_auto_calibration(auto_calibrate.value)
+        if debug_trace.value and pc is not None:
+            r = pc.ControlRotation
+            _dll.bl4gyro_trace_line(
+                f"{r.Yaw:.5f},{r.Pitch:.5f},{_YAW.value:.5f},{_PITCH.value:.5f},{int(gate_open)},{int(ads)}".encode())
+        if not gate_open:
             return
         if _YAW.value:
             pc.AddYawInput(_YAW.value / YAW_SCALE)
@@ -165,7 +185,7 @@ def on_enable() -> None:
     replay = (HERE / "replay.csv") if (HERE / "replay.csv").is_file() else None  # dev: repeatable in-game tests
     _push_settings()
     _dll.bl4gyro_start(str(HERE / "bl4gyro.log"), str(replay).encode() if replay else None)
-    _state.update(last=0.0, errors=0, statics=unrealsdk.find_class("GameplayStatics").ClassDefaultObject,
+    _state.update(last=0.0, errors=0, gate_open=False, statics=unrealsdk.find_class("GameplayStatics").ClassDefaultObject,
                   character=unrealsdk.find_class("OakCharacter"))
     add_hook(FRAME_HOOK, Type.PRE, HOOK_ID, _on_camera_update)
     build = _installed_build()

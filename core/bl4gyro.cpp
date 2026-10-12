@@ -38,6 +38,34 @@ void log(const char* fmt, ...)
     std::fflush(g_log);
 }
 
+// Optional diagnosis trace (Debug trace option): every motion packet (P), every camera drain (T) and the sensor
+// loop rate (L), so in-game behaviour can be analysed offline. Off by default.
+std::mutex g_trace_mutex;
+FILE* g_trace = nullptr;
+std::wstring g_dir;
+
+void trace(const char* fmt, ...)
+{
+    std::lock_guard lock(g_trace_mutex);
+    if (!g_trace) return;
+    va_list args;
+    va_start(args, fmt);
+    std::vfprintf(g_trace, fmt, args);
+    va_end(args);
+}
+
+void set_trace(bool on)
+{
+    std::lock_guard lock(g_trace_mutex);
+    if (on && !g_trace) {
+        g_trace = _wfopen((g_dir + L"trace.csv").c_str(), L"w");
+        if (g_trace) std::fprintf(g_trace, "kind,t,a,b,c,d,e,f,g,h,i,j\n");
+    } else if (!on && g_trace) {
+        std::fclose(g_trace);
+        g_trace = nullptr;
+    }
+}
+
 double now_s()
 {
     static const double freq = [] {
@@ -151,8 +179,9 @@ void steam_loop()
     steam::Handle active = 0;
     steam::MotionData prev{};
     double next_open = 0, window_start = now_s(), next_log = now_s() + 10;
-    int packets = 0, type = 0;
+    int packets = 0, type = 0, loops = 0;
     while (g_run) {
+        ++loops;
         apply_pending(proc);
         const double now = now_s();
         if (!input.is_open()) {
@@ -181,15 +210,21 @@ void steam_loop()
                     prev = m;
                     g_acc.add(proc.process(gyro::from_steam(now, m.rot_vel, m.pos_accel)));
                     ++packets;
+                    trace("P,%.6f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.7f,%.7f,%.7f,%.7f\n", now, m.rot_vel[0], m.rot_vel[1],
+                          m.rot_vel[2], m.pos_accel[0], m.pos_accel[1], m.pos_accel[2], m.rot_quat[0], m.rot_quat[1],
+                          m.rot_quat[2], m.rot_quat[3]);
                 }
             }
         }
         if (now - window_start >= 2) {
             char status[160];
-            std::snprintf(status, sizeof status, "%s | %.0f motion packets/s%s",
+            std::snprintf(status, sizeof status, "%s | %.0f motion packets/s | %.0f loops/s%s",
                           active ? steam::type_name(type) : (input.is_open() ? "no controller" : "Steam Input unavailable"),
-                          packets / (now - window_start), proc.calibrating() ? " | calibrating" : "");
+                          packets / (now - window_start), loops / (now - window_start),
+                          proc.calibrating() ? " | calibrating" : "");
             set_status(status);
+            trace("L,%.6f,%d,%d\n", now, loops, packets);
+            loops = 0;
             if (now >= next_log) {
                 log("status: %s", status);
                 next_log = now + 30;
@@ -222,6 +257,10 @@ BL4GYRO_API int bl4gyro_start(const wchar_t* log_path, const char* replay_csv)
         std::lock_guard lock(g_log_mutex);
         if (!g_log && log_path) g_log = _wfopen(log_path, L"w");
     }
+    if (log_path) {
+        g_dir = log_path;
+        g_dir.erase(g_dir.find_last_of(L"\\/") + 1);
+    }
     g_replay_csv = replay_csv ? replay_csv : "";
     g_acc.take();
     g_cfg_dirty = true;
@@ -235,6 +274,7 @@ BL4GYRO_API void bl4gyro_stop()
 {
     g_run = false;
     if (g_thread.joinable()) g_thread.join();
+    set_trace(false);
     set_status("stopped");
     log("bl4gyro stopped");
     std::lock_guard lock(g_log_mutex);
@@ -246,6 +286,10 @@ BL4GYRO_API void bl4gyro_stop()
 BL4GYRO_API int bl4gyro_set(const char* key, double value)
 {
     const std::string k = key ? key : "";
+    if (k == "trace") {
+        set_trace(value != 0);
+        return 1;
+    }
     std::lock_guard lock(g_cfg_mutex);
     gyro::Settings& m = g_cfg.motion;
     gyro::Camera& c = g_cfg.camera;
@@ -271,6 +315,13 @@ BL4GYRO_API void bl4gyro_take(int ads, double* yaw_deg, double* pitch_deg)
     const gyro::Delta d = gyro::to_camera(g_acc.take(), config().camera, ads != 0);
     *yaw_deg = d.yaw_deg;
     *pitch_deg = d.pitch_deg;
+    trace("T,%.6f,%d,%.5f,%.5f\n", now_s(), ads, d.yaw_deg, d.pitch_deg);
+}
+
+// Lets the sdkmod add game-side rows (e.g. ControlRotation per frame) to the same timeline as the packets.
+BL4GYRO_API void bl4gyro_trace_line(const char* text)
+{
+    if (text) trace("%s,%.6f,%s\n", "R", now_s(), text);
 }
 
 BL4GYRO_API int bl4gyro_status(char* buf, int size)

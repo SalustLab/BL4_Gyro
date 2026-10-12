@@ -211,6 +211,27 @@ static void auto_calibration_removes_bias_at_rest_but_keeps_real_turns()
     CHECK(near(turn.yaw_deg, 60.0, 1.2));
 }
 
+// In-game symptom "slow rotation feels stuck": auto-calibration must not run while the player is aiming.
+static void slow_pan_is_kept_while_auto_calibration_is_suspended()
+{
+    gyro::Settings gameplay;
+    gameplay.auto_calibrate = false; // what the mod sets while the gate is open (gameplay)
+    gyro::Processor p(gameplay);
+    BiasedSensor sensor;
+    double t = 0;
+    p.calibrate(2.0);
+    run(p, sensor, t, 2.1); // calibrated on the desk first
+    const gyro::Delta pan = run(p, sensor, t, 8.0, -3.f); // 3 dps slow pan right for 8 s
+    CHECK(near(pan.yaw_deg, 24.0, 0.5));
+
+    gyro::Processor always_auto; // auto-calibration left running during gameplay (the bug)
+    BiasedSensor sensor2;
+    double t2 = 0;
+    run(always_auto, sensor2, t2, 6.0);
+    const gyro::Delta eaten = run(always_auto, sensor2, t2, 8.0, -3.f);
+    std::printf("info: slow 24 deg pan with auto-calibration always on -> %.1f deg\n", eaten.yaw_deg);
+}
+
 static void manual_calibration_measures_bias_and_mutes_output_meanwhile()
 {
     gyro::Processor p(plain_settings());
@@ -286,6 +307,7 @@ int main()
     camera_delta_applies_sensitivity_ads_and_inversion();
     auto_calibration_removes_bias_at_rest_but_keeps_real_turns();
     manual_calibration_measures_bias_and_mutes_output_meanwhile();
+    slow_pan_is_kept_while_auto_calibration_is_suspended();
     tightening_slows_tiny_motion_and_leaves_big_motion_alone();
     tiered_smoothing_keeps_big_motion_and_calms_jitter();
     if (failures) return 1;
