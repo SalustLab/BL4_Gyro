@@ -1,0 +1,56 @@
+# unrealsdk log_all_calls, ~21.7 s of gameplay (F7 on 01:51:18Z, off 01:51:40Z), 77957 calls
+# count  function   (player 1st-person anim = 971 -> ~45 game frames/s)
+  13404 /Script/GbxEngine.GbxEngineAnimInstance:GetSlotWeight
+  11088 /Script/Engine.AnimInstance:GetCurveValueWithDefault
+   7817 /Script/Engine.AnimInstance:BlueprintUpdateAnimation
+   7578 /Script/Engine.AnimInstance:GetCurveValue
+   6406 /Script/Engine.AnimInstance:BlueprintPostEvaluateAnimation
+   5826 /Script/Engine.CameraModifier:BlueprintModifyPostProcess
+   5826 /Script/Engine.CameraModifier:BlueprintModifyCamera
+   4468 /Script/GbxEngine.GbxEngineAnimInstance:GbxIsSlotActive
+   3910 /Script/Engine.AnimInstance:BlueprintThreadSafeUpdateAnimation
+   3884 /Script/GbxEngine.GbxEngineAnimInstance:GetIsAnimSetTagValid
+   2339 /Game/AI/Creatures/Cat/_Shared/Animation/BPAnim_Cat.BPAnim_Cat_C:BlueprintThreadSafeUpdateAnimation
+    971 /Script/GbxUIUMG.GbxUIUMGTickWidget:BP_TickWidget
+    971 /Game/PlayerCharacters/_Shared/Animation/BPAnim_Player_3rd.BPAnim_Player_3rd_C:BlueprintThreadSafeUpdateAnimation
+    971 /Game/PlayerCharacters/_Shared/Animation/BPAnim_Player_1st.BPAnim_Player_1st_C:BlueprintUpdateAnimation
+    971 /Game/PlayerCharacters/_Shared/Animation/BPAnim_Player_1st.BPAnim_Player_1st_C:BlueprintThreadSafeUpdateAnimation
+    584 /Game/AI/_Shared/Animation/BPAnim_Human_GunUser_Combat.BPAnim_Human_GunUser_Combat_C:BlueprintThreadSafeUpdateAnimation
+    214 /Script/GbxGame.GbxActorScript:IsScriptStateEnabled
+    173 /Game/AI/_Shared/Character/Script_Enemy.Script_Enemy_C:CE_Query_GlobalWetness
+    162 /Script/Engine.AnimNotify:Received_Notify
+    112 /Script/Engine.AnimNotifyState:Received_NotifyTick
+     25 /Script/GbxGame.GbxCharacterMovementComponent:OnCapsuleBeginOverlap
+     25 /Script/Engine.CharacterMovementComponent:CapsuleTouched
+     24 /Script/GbxGame.GbxCharacterMovementComponent:OnCapsuleEndOverlap
+     21 /Game/PlayerCharacters/Temporary/_Shared/GbxScripts/Script_GbxSwimming.Script_GbxSwimming_C:CE_Query_GlobalWetness
+     19 /Script/Engine.AnimNotifyState:Received_NotifyBegin
+     18 /Script/Engine.AnimNotifyState:Received_NotifyEnd
+     13 /Game/AI/Creatures/Beast/_Shared/Animation/BPAnim_Beast.BPAnim_Beast_C:BlueprintThreadSafeUpdateAnimation
+     12 /Script/GbxGame.GbxActorScript:OnInit
+     12 /Script/GbxGame.GbxActorScript:OnEndPlay
+     11 /Game/AI/_Shared/Character/Script_NPC.Script_NPC_C:CE_Query_GlobalWetness
+      9 /Script/GbxGame.GbxPlayerController:Client_PlayGbxFeedback
+      9 /Script/GbxGame.GbxPlayerController:ClientStopRadialBlur
+      8 /Script/GbxGame.LightProjectileManager:OnParticleSystemFinished
+      8 /Script/Engine.PlayerController:ServerUpdateLevelVisibility
+      7 /Script/Engine.WorldPartitionRuntimeLevelStreamingCell:OnLevelShown
+      6 /Script/Engine.WorldPartitionRuntimeLevelStreamingCell:OnLevelHidden
+      6 /Script/Engine.MovementComponent:PhysicsVolumeChanged
+      5 /Script/GbxEngine.GbxEngineAnimInstance:OnAnimAssetsLoaded
+      3 /Script/GbxNav.GbxNavAnimInstance:OnStanceChange
+      3 /Script/GbxGame.GbxActorScript:OnBeginPlay
+
+# calls on player controller / camera modifiers (object short name)
+   1942 /Script/Engine.CameraModifier:BlueprintModifyPostProcess	CameraModifier_GbxCameraShake_2147481848
+   1942 /Script/Engine.CameraModifier:BlueprintModifyPostProcess	CameraModifier_CameraShake_2147481849
+   1942 /Script/Engine.CameraModifier:BlueprintModifyPostProcess	CameraAnimationCameraModifier_2147481847
+   1942 /Script/Engine.CameraModifier:BlueprintModifyCamera	CameraModifier_GbxCameraShake_2147481848
+   1942 /Script/Engine.CameraModifier:BlueprintModifyCamera	CameraModifier_CameraShake_2147481849
+   1942 /Script/Engine.CameraModifier:BlueprintModifyCamera	CameraAnimationCameraModifier_2147481847
+      9 /Script/GbxGame.GbxPlayerController:Client_PlayGbxFeedback	OakPlayerController_2147481852
+      9 /Script/GbxGame.GbxPlayerController:ClientStopRadialBlur	OakPlayerController_2147481852
+      8 /Script/Engine.PlayerController:ServerUpdateLevelVisibility	OakPlayerController_2147481852
+      1 /Script/OakGame.OakUIDataCollector_WeaponStatus:OnSwitchedMode	OakUIDataCollector_WeaponStatus_2147481179
+      1 /Script/OakGame.OakUIDataCollector_WeaponStatus:OnStartSwitchingModes	OakUIDataCollector_WeaponStatus_2147481179
+      1 /Script/OakGame.OakUIDataCollector_EquippedAmmo:OnSwitchedMode	OakUIDataCollector_EquippedAmmo_2147481212
