@@ -1,9 +1,10 @@
 # Removes Native Gyro Aim (and, with -RemoveModManager, every file the oak2-mod-manager install added,
-# as listed in evidence\B-oak2-install-manifest.txt). Never touches game files or other mods' files.
-# Run: powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1 [-GameDir "<...>"] [-RemoveModManager]
-param([string]$GameDir = 'F:\SteamLibrary\steamapps\common\Borderlands 4', [switch]$RemoveModManager)
+# as listed in oak2-install-manifest.txt). Never touches game files or other mods' files.
+# Run: powershell -ExecutionPolicy Bypass -File uninstall.ps1 [-GameDir "<...>"] [-RemoveModManager]   (default: found via Steam)
+param([string]$GameDir, [switch]$RemoveModManager)
 $ErrorActionPreference = 'Stop'
-$repo = Split-Path $PSScriptRoot -Parent
+. (Join-Path $PSScriptRoot 'steam-game-dir.ps1')
+if (-not $GameDir) { $GameDir = Find-GameDir }
 
 if (Get-Process Borderlands4 -ErrorAction SilentlyContinue) { throw 'Close Borderlands 4 first.' }
 
@@ -13,7 +14,8 @@ foreach ($p in 'sdk_mods\NativeGyro', 'sdk_mods\NativeGyroProbe', 'sdk_mods\sett
 }
 
 if ($RemoveModManager) {
-    $manifest = Join-Path $repo 'evidence\B-oak2-install-manifest.txt'
+    $manifest = Join-Path $PSScriptRoot 'oak2-install-manifest.txt'  # release package; the repo keeps it in evidence\
+    if (-not (Test-Path $manifest)) { $manifest = Join-Path (Split-Path $PSScriptRoot -Parent) 'evidence\B-oak2-install-manifest.txt' }
     Get-Content $manifest | Where-Object { $_ -and -not $_.StartsWith('#') } | ForEach-Object {
         $full = Join-Path $GameDir $_
         if (Test-Path $full -PathType Leaf) { Remove-Item -Force $full }

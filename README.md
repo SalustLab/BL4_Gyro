@@ -16,10 +16,15 @@ Prioridade: **GuliKit TT Max (NS69)** em Switch mode. Testado no Steam build **2
 
 ## Instalação
 
+Com o jogo fechado, baixe `NativeGyro-<versão>.zip` em Releases, extraia e, dentro da pasta extraída, rode:
+
 ```
-build.cmd                                                   (compila e roda os testes)
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 [-GameDir "...\Borderlands 4"]
+powershell -ExecutionPolicy Bypass -File install.ps1
 ```
+
+O script acha a pasta do jogo em qualquer biblioteca da Steam. Se não achar, informe a pasta:
+`install.ps1 -GameDir "D:\...\Borderlands 4"`. Instalação manual: copie a pasta `NativeGyro` para
+`<pasta do jogo>\sdk_mods\`. Não compacte nem renomeie a pasta: o mod carrega o `bl4gyro.dll` de dentro dela.
 
 No jogo: console (tecla definida no oak2; aqui F6) → `mods` → **Native Gyro Aim** → `E`. Depois disso o mod liga
 sozinho nas próximas vezes. Para ver o texto do menu, abra o console grande (tecla do console duas vezes).
@@ -43,10 +48,25 @@ automática só roda com o jogo pausado ou em menus, nunca durante a mira. Tamb�
 
 ## Desinstalação
 
+Na pasta extraída do zip (ou em `scripts\`, no repositório), com o jogo fechado:
+
 ```
-powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1                       (só este mod)
-powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1 -RemoveModManager     (também o oak2, pelo manifesto)
+powershell -ExecutionPolicy Bypass -File uninstall.ps1                       (só este mod)
+powershell -ExecutionPolicy Bypass -File uninstall.ps1 -RemoveModManager     (também o oak2 v0.3, pelo manifesto)
 ```
+
+Os arquivos do jogo e de outros mods não são tocados. Também aceita `-GameDir`.
+
+## Desenvolvimento
+
+```
+build.cmd                                                   (compila e roda os testes)
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1      (instala direto do build)
+powershell -ExecutionPolicy Bypass -File scripts\package.ps1      (gera dist\NativeGyro-<versão>.zip e os SHA-256)
+```
+
+Antes de publicar uma release: `build.cmd` sem falhas, gerar o zip, enviar o `bl4gyro.dll` ao VirusTotal e publicar
+os SHA-256 junto com a release.
 
 ## Diagnóstico do controle
 
