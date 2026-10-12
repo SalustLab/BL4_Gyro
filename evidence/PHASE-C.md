@@ -44,3 +44,18 @@ next frame with lag 0 (rms residual 0.044° vs 0.33° signal); BL4 adds no smoot
 - Replay of the same motion with the FPS capped at 30/60/144 (the DLL-level `dll_replay` test proves the integration
   is frame-rate independent: 180.0° at 30 and 144 fps; the in-game injection was shown exact per frame).
 - Vehicles, cutscenes, co-op, sessions longer than ~1.5 h.
+
+## Release package install test (2026-10-12)
+
+Package `NativeGyro-0.1.0.zip` (`0c294c4`, zip SHA-256 `990AF939…6E13`, DLL `5CE58D68…99E8`) on the real game, after
+`uninstall.ps1` (oak2 kept, mod and its settings removed, as a new player would have it).
+
+| Check | Result |
+|---|---|
+| `install.ps1` from the extracted zip, without `-GameDir` | ✓ found `F:\SteamLibrary\...\Borderlands 4` (Steam has another library on an unplugged drive `I:`) |
+| Installed files identical to the zip | ✓ SHA-256 match |
+| Mod enabled in game, gyro working (TT Max, Switch mode) | ✓ tester |
+| TT Max in Windows/PC (XInput) mode | no gyro, as expected: `bl4gyro.log` `connected: XBoxOne (3)` → `0 motion packets/s` (Phase A limitation) |
+| `bl4gyro.dll` imports | `KERNEL32.dll` only (static CRT), no VC++ runtime needed |
+
+Next: original Switch Pro Controller and DualSense.

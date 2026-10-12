@@ -30,7 +30,8 @@
 - **Gyro desligado fora do personagem a pé** (veículos), e também com cursor visível, em pausa, com look input
   ignorado ou com a câmera fora do personagem.
 - **Testado em jogo** (`evidence/PHASE-C.md`): gyro + analógico, ADS, menus/mapa/inventário, troca de arma,
-  vibração, ícones, reconexão do controle, desligar/religar o mod, morte/loading.
+  vibração, ícones, reconexão do controle, desligar/religar o mod, morte/loading, instalação pelo zip de release
+  (sem `-GameDir`).
 - **Não testado:** veículos, cutscenes e diálogos, co-op, Epic Store, outros controles (DualSense, Pro Controller
   original e outros devem funcionar via Steam Input, mas não foram verificados), sessões longas (>1,5 h),
   replay com FPS travado em 30/60/144 dentro do jogo (coberto só pelo teste do DLL).
