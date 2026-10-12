@@ -61,6 +61,10 @@ se só tiver Bluetooth.
 - `evidence/`: resultados das Fases A, B e C (CSV, logs e resumos).
 - `CONTEXT.md`: glossário.
 
+## Licença
+
+Código aberto sob a licença MIT (`LICENSE`).
+
 ## Terceiros
 
 - GamepadMotionHelpers v10 (MIT, vendorizado em `third_party/`).
