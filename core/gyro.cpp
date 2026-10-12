@@ -71,6 +71,7 @@ Delta Processor::process(const Sample& s)
     const bool valid = has_prev_ && dt > 0 && dt <= kMaxGapS;
     prev_t_ = s.t_s;
     has_prev_ = true;
+    rate_ = {};
     if (!valid) return {};
 
     motion_.ProcessMotion(s.gyro_dps[0], s.gyro_dps[1], s.gyro_dps[2], s.accel_g[0], s.accel_g[1],
@@ -104,38 +105,41 @@ Delta Processor::process(const Sample& s)
         pitch *= scale;
         yaw *= scale;
     }
-    return {-yaw * dt, pitch * dt};
+    rate_ = {-yaw, pitch};
+    return {rate_.yaw_deg * dt, rate_.pitch_deg * dt};
 }
 
 void Processor::reset()
 {
     has_prev_ = false;
+    rate_ = {};
     smoothed_[0] = smoothed_[1] = 0;
     motion_.ResetMotion();
 }
 
-void Pacer::add(const Delta& d, double t_s)
+void RateHold::advance(double t_s)
 {
-    std::lock_guard lock(mutex_);
-    const double gap = t_s - last_add_;
-    if (last_add_ >= 0 && gap > 0 && gap < kMaxGapS) // learn the packet interval, ignoring stalls
-        interval_ += (std::clamp(gap, 0.004, 0.05) - interval_) * 0.1;
-    last_add_ = t_s;
-    if (d.yaw_deg != 0 || d.pitch_deg != 0) pending_.push_back({d, t_s, t_s + interval_, 0});
+    const double until = std::min(t_s, t_rate_ + kHoldS);
+    if (until > t_mark_) {
+        pending_.yaw_deg += rate_.yaw_deg * (until - t_mark_);
+        pending_.pitch_deg += rate_.pitch_deg * (until - t_mark_);
+    }
+    t_mark_ = std::max(t_mark_, t_s);
 }
 
-Delta Pacer::take(double now_s)
+void RateHold::set(const Delta& rate_dps, double t_s)
 {
     std::lock_guard lock(mutex_);
-    Delta out;
-    for (Segment& s : pending_) {
-        const double f = std::clamp((now_s - s.t0) / (s.t1 - s.t0), 0.0, 1.0);
-        out.yaw_deg += s.d.yaw_deg * (f - s.done);
-        out.pitch_deg += s.d.pitch_deg * (f - s.done);
-        s.done = f;
-    }
-    while (!pending_.empty() && pending_.front().done >= 1.0) pending_.pop_front();
-    return out;
+    advance(t_s); // never moves t_mark_ back: a late-stamped update must not re-count time already taken
+    rate_ = rate_dps;
+    t_rate_ = t_s;
+}
+
+Delta RateHold::take(double now_s)
+{
+    std::lock_guard lock(mutex_);
+    advance(now_s);
+    return std::exchange(pending_, Delta{});
 }
 
 Delta to_camera(const Delta& controller, const Camera& camera, bool ads)

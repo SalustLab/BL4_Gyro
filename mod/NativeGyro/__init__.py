@@ -43,10 +43,10 @@ def _setter(key: str, convert=float):
     return lambda _option, value: _set(key, convert(value))
 
 
-sens_x = SliderOption("Horizontal sensitivity", 2.0, 0.1, 10.0, 0.1, False,
+sens_x = SliderOption("Horizontal sensitivity", 1.25, 0.1, 10.0, 0.1, False,
                       description="Camera degrees per degree the controller turns left/right. Starting value, tune to taste.",
                       on_change_anytime=_setter("sens_x"))
-sens_y = SliderOption("Vertical sensitivity", 2.0, 0.1, 10.0, 0.1, False,
+sens_y = SliderOption("Vertical sensitivity", 1.25, 0.1, 10.0, 0.1, False,
                       description="Camera degrees per degree the controller tilts up/down.",
                       on_change_anytime=_setter("sens_y"))
 ads_multiplier = SliderOption("ADS sensitivity multiplier", 1.0, 0.1, 2.0, 0.05, False,
