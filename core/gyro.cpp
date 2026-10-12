@@ -52,7 +52,9 @@ void Processor::configure(const Settings& settings)
 void Processor::apply_calibration_mode()
 {
     using namespace GamepadMotionHelpers;
-    motion_.SetCalibrationMode(settings_.auto_calibrate ? (Stillness | SensorFusion) : Manual);
+    // Stillness only: SensorFusion corrects pitch/roll bias from the accelerometer, which hand motion and the
+    // TT Max's ~9% accel scale error can skew (in-game symptom: aim slowly creeping up).
+    motion_.SetCalibrationMode(settings_.auto_calibrate ? Stillness : Manual);
 }
 
 void Processor::calibrate(double seconds)
