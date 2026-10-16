@@ -1,16 +1,22 @@
-# Removes Native Gyro Aim (and, with -RemoveModManager, every file the oak2-mod-manager install added,
-# as listed in oak2-install-manifest.txt). Never touches game files or other mods' files.
-# Run: powershell -ExecutionPolicy Bypass -File uninstall.ps1 [-GameDir "<...>"] [-RemoveModManager]   (default: found via Steam)
-param([string]$GameDir, [switch]$RemoveModManager)
+# Removes Native Gyro Aim. Your gyro settings are kept unless -RemoveSettings. With -RemoveModManager it also removes
+# every file the oak2-mod-manager install added (oak2-install-manifest.txt) - other mods then stop working too.
+# Never touches game files or other mods' files.
+# Run: powershell -ExecutionPolicy Bypass -File uninstall.ps1 [-GameDir "<...>"] [-RemoveSettings] [-RemoveModManager]
+param([string]$GameDir, [switch]$RemoveSettings, [switch]$RemoveModManager)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'steam-game-dir.ps1')
 if (-not $GameDir) { $GameDir = Find-GameDir }
 
-if (Get-Process Borderlands4 -ErrorAction SilentlyContinue) { throw 'Close Borderlands 4 first.' }
+if (Get-Process Borderlands4 -ErrorAction SilentlyContinue) { throw 'Borderlands 4 is running. Close the game first.' }
 
-foreach ($p in 'sdk_mods\NativeGyro', 'sdk_mods\NativeGyroProbe', 'sdk_mods\settings\NativeGyro.json', 'sdk_mods\settings\NativeGyroProbe.json') {
+$paths = 'sdk_mods\NativeGyro', 'sdk_mods\NativeGyroProbe', 'sdk_mods\settings\NativeGyroProbe.json'
+if ($RemoveSettings) { $paths += 'sdk_mods\settings\NativeGyro.json' }
+foreach ($p in $paths) {
     $full = Join-Path $GameDir $p
     if (Test-Path $full) { Remove-Item -Recurse -Force $full; Write-Host "removed $p" }
+}
+if (-not $RemoveSettings -and (Test-Path (Join-Path $GameDir 'sdk_mods\settings\NativeGyro.json'))) {
+    Write-Host 'kept your gyro settings (sdk_mods\settings\NativeGyro.json)'
 }
 
 if ($RemoveModManager) {

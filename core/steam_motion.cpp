@@ -34,6 +34,8 @@ bool Input::open(const wchar_t* dll_path, bool init_api, std::string& error)
     resolve(module, "SteamAPI_ISteamInput_GetConnectedControllers", connected_, missing);
     resolve(module, "SteamAPI_ISteamInput_GetInputTypeForHandle", type_, missing);
     resolve(module, "SteamAPI_ISteamInput_GetMotionData", motion_, missing);
+    origin_from_xbox_ = reinterpret_cast<decltype(origin_from_xbox_)>(
+        GetProcAddress(module, "SteamAPI_ISteamInput_GetActionOriginFromXboxOrigin"));
     if (init_api) {
         resolve(module, "SteamAPI_Init", api_init, missing);
         resolve(module, "SteamAPI_Shutdown", api_shutdown_, missing);
@@ -82,6 +84,11 @@ std::vector<Handle> Input::controllers()
 
 int Input::type(Handle h) const { return type_(input_, h); }
 
+int Input::origin_for_xbox(Handle h, int xbox_origin) const
+{
+    return origin_from_xbox_ ? origin_from_xbox_(input_, h, xbox_origin) : -1;
+}
+
 MotionData Input::motion(Handle h) const { return motion_(input_, h); }
 
 const char* type_name(int t)
@@ -91,6 +98,30 @@ const char* type_name(int t)
                                         "SwitchJoyConPair", "SwitchJoyConSingle", "SwitchProController",
                                         "MobileTouch",      "PS3",             "PS5",       "SteamDeckController"};
     return t >= 0 && t < static_cast<int>(std::size(names)) ? names[t] : "?";
+}
+
+const char* origin_label(int origin)
+{
+    // EInputActionOrigin is append-only; each controller lists A/B/X/Y (PlayStation: X/O/Triangle/Square), then
+    // left/right bumper. Values from Steamworks' isteaminput.h.
+    struct Run {
+        int first;
+        const char* labels[6];
+    };
+    static const Run runs[] = {
+        {1, {"A", "B", "X", "Y", "LB", "RB"}},                // Steam Controller
+        {50, {"X", "O", "Triangle", "Square", "L1", "R1"}},   // PS4
+        {114, {"A", "B", "X", "Y", "LB", "RB"}},              // Xbox One
+        {153, {"A", "B", "X", "Y", "LB", "RB"}},              // Xbox 360
+        {192, {"A", "B", "X", "Y", "L", "R"}},                // Switch Pro / Joy-Cons
+        {258, {"X", "O", "Triangle", "Square", "L1", "R1"}},  // PS5
+        {333, {"A", "B", "X", "Y", "L1", "R1"}},              // Steam Deck
+        {495, {"A", "B", "X", "Y", "L", "R"}},                // Switch 2
+        {542, {"A", "B", "X", "Y", "L1", "R1"}},              // Steam Controller (2026)
+    };
+    for (const Run& r : runs)
+        if (origin >= r.first && origin < r.first + 6) return r.labels[origin - r.first];
+    return nullptr;
 }
 
 } // namespace steam

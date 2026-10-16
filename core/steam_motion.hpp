@@ -34,6 +34,9 @@ public:
     std::vector<Handle> controllers(); // also pumps Steam Input (RunFrame)
     int type(Handle h) const;          // ESteamInputType
     MotionData motion(Handle h) const;
+    // EInputActionOrigin of the physical button that Steam's virtual Xbox pad reports as `xbox_origin` (EXboxOrigin),
+    // following the user's Steam layout settings; -1 if steam_api64 lacks the export.
+    int origin_for_xbox(Handle h, int xbox_origin) const;
 
 private:
     void* input_ = nullptr;
@@ -44,10 +47,14 @@ private:
     int (*connected_)(void*, Handle*) = nullptr;
     int (*type_)(void*, Handle) = nullptr;
     MotionData (*motion_)(void*, Handle) = nullptr;
+    int (*origin_from_xbox_)(void*, Handle, int) = nullptr; // optional
     void (*api_shutdown_)() = nullptr;
     void (*run_callbacks_)() = nullptr; // only pumped when we own the API (the game pumps its own)
 };
 
 const char* type_name(int steam_input_type);
+
+// Printed name of a face button or shoulder for an EInputActionOrigin ("A", "X", "O", "L1"...), nullptr if unknown.
+const char* origin_label(int origin);
 
 } // namespace steam

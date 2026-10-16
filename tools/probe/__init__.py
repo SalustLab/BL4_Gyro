@@ -1,7 +1,7 @@
 """Phase B probe (dev only, not distributed). Keybinds stay here; the logic lives in impl.py and is
 hot-reloaded with Insert, so experiments can change without restarting the game.
 
-  F7 call logging  F8 snapshot  F9/F10/F11 tests A/B/C  F5/Home per-frame tests D/E  Insert reload impl.py
+  F7 call logging  F8 snapshot  F9 gate watch  F10 UI/input spike  F5/Home per-frame tests D/E  Insert reload impl.py
 """
 
 import importlib
@@ -26,9 +26,9 @@ def key_f9() -> None:
     impl.test_a()
 
 
-@keybind("Probe: test B", "F10")
+@keybind("Probe: UI/input spike", "F10")
 def key_f10() -> None:
-    impl.test_b()
+    impl.ui_spike()
 
 
 @keybind("Probe: test C", "F11")

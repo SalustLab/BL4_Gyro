@@ -41,5 +41,6 @@ add_custom_command(TARGET bl4gyro POST_BUILD
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND)
     add_test(NAME dll_replay COMMAND Python3::Interpreter -I ${CMAKE_SOURCE_DIR}/tests/dll_replay_check.py $<TARGET_FILE:bl4gyro>)
+    add_test(NAME mod_logic COMMAND Python3::Interpreter -I ${CMAKE_SOURCE_DIR}/tests/mod_logic_check.py)
 endif()
 add_test(NAME scripts COMMAND powershell -NoProfile -ExecutionPolicy Bypass -File ${CMAKE_SOURCE_DIR}/tests/scripts_check.ps1)

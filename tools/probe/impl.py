@@ -240,6 +240,198 @@ def _dump_mappings() -> None:
     out(f"mappings.txt written ({len(lines)} mappings); motion-key mappings: {motion if motion else 'none'}")
 
 
+SPIKE_HOOK_ID = "probe_spike"
+SPIKE_KEYS = ("Gamepad_DPad_Up", "Gamepad_DPad_Down", "Gamepad_DPad_Left", "Gamepad_DPad_Right",
+              "Gamepad_FaceButton_Bottom", "Gamepad_FaceButton_Right", "Gamepad_FaceButton_Top",
+              "Gamepad_FaceButton_Left", "Gamepad_LeftShoulder", "Gamepad_RightShoulder", "Gamepad_LeftTrigger",
+              "Gamepad_RightTrigger", "Gamepad_LeftThumbstick", "Gamepad_RightThumbstick", "Gamepad_Special_Left",
+              "Gamepad_Special_Right", "Gamepad_LeftX", "Gamepad_LeftY", "Gamepad_Left2D", "Gamepad_RightX",
+              "Gamepad_RightY", "Gamepad_LeftTriggerAxis", "Gamepad_RightTriggerAxis", "Up", "Down", "Enter")
+_spike = {"on": False, "widget": None, "texts": [], "handles": [], "events": [], "counts": {}, "frames": 0}
+
+
+def _make_widget(pc):
+    """UMG built by reflection: a UserWidget whose tree is Border > VerticalBox > TextBlock x3."""
+    lib = unrealsdk.find_class("WidgetBlueprintLibrary").ClassDefaultObject
+    widget = None
+    for cls_name in ("UserWidget", "GbxUIUMGTickWidget"):
+        widget = safe(lambda cls_name=cls_name: lib.Create(pc, unrealsdk.find_class(cls_name), pc))
+        out(f"SPIKE Create({cls_name}) -> {widget if isinstance(widget, str) else name(widget)}")
+        if widget is not None and not isinstance(widget, str):
+            break
+    else:
+        return None
+    tree = widget.WidgetTree
+    out(f"SPIKE WidgetTree {name(tree)}")
+    if tree is None:
+        tree = unrealsdk.construct_object("WidgetTree", widget)
+        widget.WidgetTree = tree
+    border = unrealsdk.construct_object("Border", tree)
+    box = unrealsdk.construct_object("VerticalBox", tree)
+    tree.RootWidget = border
+    out(f"SPIKE SetContent {safe(lambda: border.SetContent(box))}")
+    out(f"SPIKE SetBrushColor {safe(lambda: border.SetBrushColor(unrealsdk.make_struct('LinearColor', R=0.02, G=0.02, B=0.03, A=0.85)))}")
+    out(f"SPIKE SetPadding {safe(lambda: border.SetPadding(unrealsdk.make_struct('Margin', Left=24, Top=16, Right=24, Bottom=16)))}")
+    texts = []
+    for i, size in enumerate((32, 24, 24)):
+        t = unrealsdk.construct_object("TextBlock", tree)
+        out(f"SPIKE AddChild[{i}] {safe(lambda t=t: box.AddChildToVerticalBox(t))}")
+        out(f"SPIKE SetText[{i}] {safe(lambda t=t, i=i: t.SetText(f'Native Gyro spike line {i}'))}")
+        font = safe(lambda t=t: t.Font)
+        out(f"SPIKE Font[{i}] {safe(lambda font=font: (font.FontObject, font.Size, font.TypefaceFontName))}")
+        if not isinstance(font, str):
+            font.Size = size
+            out(f"SPIKE SetFont[{i}] {safe(lambda t=t, font=font: t.SetFont(font))}")
+        texts.append(t)
+    color = unrealsdk.make_struct("SlateColor", SpecifiedColor=unrealsdk.make_struct("LinearColor", R=1, G=0.85, B=0.2, A=1))
+    out(f"SPIKE SetColorAndOpacity {safe(lambda: texts[0].SetColorAndOpacity(color))}")
+    out(f"SPIKE AddToViewport {safe(lambda: widget.AddToViewport(100))}")
+    out(f"SPIKE SetAlignment {safe(lambda: widget.SetAlignmentInViewport(unrealsdk.make_struct('Vector2D', X=0.5, Y=0.5)))}")
+    out(f"SPIKE SetPosition {safe(lambda: widget.SetPositionInViewport(unrealsdk.make_struct('Vector2D', X=960, Y=540), True))}")
+    out(f"SPIKE SetDesiredSize {safe(lambda: widget.SetDesiredSizeInViewport(unrealsdk.make_struct('Vector2D', X=900, Y=300)))}")
+    layout = unrealsdk.find_class("WidgetLayoutLibrary").ClassDefaultObject
+    out(f"SPIKE viewport size {safe(lambda: tuple(layout.GetViewportSize(pc)))}  scale {safe(lambda: layout.GetViewportScale(pc))}")
+    out(f"SPIKE IsInViewport {safe(lambda: widget.IsInViewport())}")
+    _spike["texts"] = texts
+    return widget
+
+
+def _on_key(key: str):
+    def cb(event):
+        c = _spike["counts"]
+        ev = getattr(event, "name", str(event))
+        c[(key, ev)] = c.get((key, ev), 0) + 1
+        if c[(key, ev)] <= 3:
+            _spike["events"].append(f"{key}:{ev}")
+        if key != "*" and ev != "IE_Axis":
+            _spike["last"] = f"{key} {ev}"
+        if not _spike["on"] or ev == "IE_Released":
+            return None
+        return unrealsdk.hooks.Block
+    return cb
+
+
+def _on_spike_frame(_obj, _args, _ret, _func) -> None:
+    s = _spike
+    s["frames"] += 1
+    if s["frames"] % 2 or not s["texts"]:
+        return
+    pc = get_pc(possibly_loading=True)
+    paused = safe(lambda: unrealsdk.find_class("GameplayStatics").ClassDefaultObject.IsGamePaused(pc))
+    safe(lambda: s["texts"][1].SetText(f"frame {s['frames'] // 2}  paused {paused}"))
+    safe(lambda: s["texts"][2].SetText(f"last key: {s.get('last', '-')}"))
+
+
+def ui_spike_v1() -> None:
+    """Former F10 (v1): on = panel shown + pad keys blocked (releases pass) + ignore move; off = everything restored."""
+    from keybinds.keybinds import deregister_keybind, register_keybind
+
+    s = _spike
+    pc = get_pc()
+    if not s["on"]:
+        s.update(on=True, events=[], counts={}, frames=0, last="-")
+        out("SPIKE === on")
+        s["widget"] = safe(lambda: _make_widget(pc))
+        out(f"SPIKE widget {s['widget'] if isinstance(s['widget'], str) else name(s['widget'])}")
+        s["handles"] = [register_keybind(k, None, _on_key(k)) for k in SPIKE_KEYS]
+        s["handles"].append(register_keybind(None, None, _on_key("*")))
+        out(f"SPIKE SetIgnoreMoveInput {safe(lambda: pc.SetIgnoreMoveInput(True))}  moveIgnored {safe(lambda: pc.IsMoveInputIgnored())}")
+        unrealsdk.hooks.add_hook(FRAME_HOOK, unrealsdk.hooks.Type.PRE, SPIKE_HOOK_ID, _on_spike_frame)
+        return
+    s["on"] = False
+    unrealsdk.hooks.remove_hook(FRAME_HOOK, unrealsdk.hooks.Type.PRE, SPIKE_HOOK_ID)
+    for h in s["handles"]:
+        deregister_keybind(h)
+    s["handles"] = []
+    out(f"SPIKE ResetIgnoreMoveInput {safe(lambda: pc.ResetIgnoreMoveInput())}  moveIgnored {safe(lambda: pc.IsMoveInputIgnored())}")
+    w = s["widget"]
+    if w is not None and not isinstance(w, str):
+        out(f"SPIKE RemoveFromParent {safe(lambda: w.RemoveFromParent())}")
+    s["widget"], s["texts"] = None, []
+    out("SPIKE first events (order): " + " ".join(s["events"][:80]))
+    out("SPIKE counts: " + "  ".join(f"{k}:{e}={n}" for (k, e), n in sorted(s["counts"].items())))
+    out("SPIKE === off")
+
+
+INPUT_HOOK_ID = "probe_input2"
+POLL_KEYS = ("Gamepad_DPad_Up", "Gamepad_DPad_Down", "Gamepad_FaceButton_Bottom", "Gamepad_FaceButton_Right",
+             "Gamepad_LeftThumbstick", "Gamepad_RightThumbstick", "Gamepad_LeftShoulder", "Gamepad_RightTrigger",
+             "Gamepad_Special_Right", "SpaceBar", "LeftMouseButton")
+_spike2 = {"on": False, "down": {}, "removed": [], "subsystem": None}
+
+
+def _key(name: str):
+    return unrealsdk.make_struct("Key", KeyName=name)
+
+
+def _input_subsystem(pc):
+    lib = unrealsdk.find_class("SubsystemBlueprintLibrary").ClassDefaultObject
+    return lib.GetLocalPlayerSubSystemFromPlayerController(pc, unrealsdk.find_class("EnhancedInputLocalPlayerSubsystem"))
+
+
+def _on_poll(_obj, _args, _ret, _func) -> None:
+    """Edge-logs key state as the player input sees it (does not depend on the keybinds hook)."""
+    s = _spike2
+    pc = get_pc(possibly_loading=True)
+    if pc is None:
+        return
+    for k in POLL_KEYS:
+        down = safe(lambda k=k: bool(pc.IsInputKeyDown(_key(k))))
+        if down != s["down"].get(k):
+            if k in s["down"]:
+                out(f"SPIKE2 poll {k} -> {down}")
+            s["down"][k] = down
+
+
+def input_spike() -> None:
+    """F10 (v2): on = poll pad keys with IsInputKeyDown + remove the player's gameplay mapping contexts;
+    off = restore the contexts with their priorities."""
+    s = _spike2
+    pc = get_pc()
+    if not s["on"]:
+        s.update(on=True, down={}, removed=[])
+        out("SPIKE2 === on")
+        sub = safe(lambda: _input_subsystem(pc))
+        out(f"SPIKE2 subsystem {sub if isinstance(sub, str) else name(sub)}")
+        s["subsystem"] = sub
+        statics = unrealsdk.find_class("GameplayStatics").ClassDefaultObject
+        out(f"SPIKE3 SetGamePaused(True) -> {safe(lambda: statics.SetGamePaused(pc, True))}  "
+            f"IsGamePaused {safe(lambda: statics.IsGamePaused(pc))}")
+        if sub is not None and not isinstance(sub, str):
+            shown = 0
+            for imc in unrealsdk.find_all("InputMappingContext", exact=False):
+                found = safe(lambda imc=imc: sub.HasMappingContext(imc))
+                if shown < 3 or (not isinstance(found, str) and found and "player" in imc.Name.lower()):
+                    shown += 1
+                    out(f"SPIKE2 HasMappingContext({imc.Name}) -> {found!r}")
+                if isinstance(found, str) or not found:
+                    continue
+                has, priority = found if isinstance(found, tuple) else (found, 0)
+                if not has:
+                    continue
+                out(f"SPIKE2 applied {imc.Name} priority {priority}")
+                if imc.Name.lower().startswith(("context_player", "context_vehicle")):
+                    res = safe(lambda imc=imc: sub.RemoveMappingContext(imc, unrealsdk.make_struct("ModifyContextOptions")))
+                    out(f"SPIKE2   removed -> {res}")
+                    s["removed"].append((imc, priority))
+        unrealsdk.hooks.add_hook(FRAME_HOOK, unrealsdk.hooks.Type.PRE, INPUT_HOOK_ID, _on_poll)
+        return
+    s["on"] = False
+    unrealsdk.hooks.remove_hook(FRAME_HOOK, unrealsdk.hooks.Type.PRE, INPUT_HOOK_ID)
+    sub = s["subsystem"]
+    for imc, priority in s["removed"]:
+        opts = unrealsdk.make_struct("ModifyContextOptions", bIgnoreAllPressedKeysUntilRelease=True)
+        out(f"SPIKE2 restore {imc.Name} {priority} -> {safe(lambda imc=imc, priority=priority: sub.AddMappingContext(imc, priority, opts))}")
+    s["removed"] = []
+    statics = unrealsdk.find_class("GameplayStatics").ClassDefaultObject
+    out(f"SPIKE3 SetGamePaused(False) -> {safe(lambda: statics.SetGamePaused(pc, False))}  "
+        f"IsGamePaused {safe(lambda: statics.IsGamePaused(pc))}")
+    out("SPIKE2 === off")
+
+
+ui_spike = input_spike  # F10 now runs v2 (the keybind calls impl.ui_spike)
+
+
 def on_reload() -> None:
     out("=== impl loaded")
     safe(_dump_members)

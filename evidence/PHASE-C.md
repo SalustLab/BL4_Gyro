@@ -11,7 +11,7 @@ output). Tester: the project owner, playing single player with OptiScaler frame 
 | `4e057ea` (first in-game) | "rotation feels stuck", "directions locked", "aim creeps up" | Stillness auto-calibration during aiming ate slow steady motion (24° → 8.5° in a unit test); SensorFusion + 9%-off accelerometer suspected for the pitch creep; Steam motion only ~48/s → 39% of frames with no rotation (`C-trace-1.csv`) | `0c93686`: auto-calibration only while the gate is closed, Stillness only; Debug trace |
 | `0c93686` | "not creeping up any more"; still judder | in-game drift after menu calibration −0.013 °/s pitch, −0.020 °/s yaw; judder from delivery timing | `ad63aa7`: paced delivery |
 | `ad63aa7` | "better, still a bit stuck"; sensitivity too high (chose 1.25) | Steam skips updates: 146 gaps of 40–500 ms in 69 s, only 2 matching game hitches (`C-trace-2-paced.csv`) → stall + catch-up | `7494c04`: held angular velocity integrated at frame time; default sensitivity 1.25 |
-| `7494c04` | **"agora sim … é um gyro de respeito"** | `C-trace-3-ratehold.csv`: 0% empty frames in motion | — |
+| `7494c04` | **"agora sim … é um gyro de respeito"** ("now it's right … that's a serious gyro") | `C-trace-3-ratehold.csv`: 0% empty frames in motion | — |
 
 Smoothness, same criterion on all traces (frames where the 7-frame mean rotation > 0.08°):
 
@@ -67,9 +67,9 @@ Setup: Switch 2 Pro Controller through Switch2Connect emulating a USB DualSense 
 
 | Build | Tester report | Measured cause | Fix |
 |---|---|---|---|
-| `79b49d1`-era DLL (Steam Input only) | "não funcionou" | `bl4gyro.log`: `no controller \| 0 motion packets/s`; Steam Input gives the game 0 controllers | SDL3 HID fallback when Steam Input has no controller |
-| HID fallback, first build | works, but "terrível, travado, mal mexe" | 1000 packets/s; `ttmax-diag sdl --rest 5`: 4678 of 5002 samples with `dt = 0` (one IMU reading, ~15 ms apart, repeated over 1 kHz reports); each repeat zeroed the held rate | drop samples whose `sensor_timestamp` repeats |
-| HID fallback, dedupe | **"ficou ótimo"** | `bl4gyro.log`: `ps5 (HID) \| 65–67 motion packets/s` | — |
+| `79b49d1`-era DLL (Steam Input only) | "não funcionou" ("it didn't work") | `bl4gyro.log`: `no controller \| 0 motion packets/s`; Steam Input gives the game 0 controllers | SDL3 HID fallback when Steam Input has no controller |
+| HID fallback, first build | works, but "terrível, travado, mal mexe" ("terrible, stuck, barely moves") | 1000 packets/s; `ttmax-diag sdl --rest 5`: 4678 of 5002 samples with `dt = 0` (one IMU reading, ~15 ms apart, repeated over 1 kHz reports); each repeat zeroed the held rate | drop samples whose `sensor_timestamp` repeats |
+| HID fallback, dedupe | **"ficou ótimo"** ("it's great now") | `bl4gyro.log`: `ps5 (HID) \| 65–67 motion packets/s` | — |
 
 At rest via SDL (same controller): bias pitch +0.001, yaw −0.020 °/s; noise σ ≤ 0.12 °/s; accel 1.02 g.
 Periods of `0 motion packets/s` in the log are the game out of focus (samples are dropped then).
@@ -82,7 +82,7 @@ Same build (HID fallback with dedupe), Switch2Connect off, Steam Input off for P
 |---|---|
 | `ttmax-diag sdl --rest 5` | 630 samples/s, 0 repeated timestamps, bias ≤ 0.14 °/s, σ ≤ 0.10 °/s, accel 0.98 g |
 | `bl4gyro.log` in game | `ps5 (HID) \| 618–641 motion packets/s` |
-| Gyro aim (tester) | ✓ **"funcionou perfeitamente"** |
+| Gyro aim (tester) | ✓ **"funcionou perfeitamente"** ("worked perfectly") |
 | Haptics and adaptive triggers with SDL reading the pad | ✓ unaffected |
-| Same pad over USB (BT off, cable) | ✓ tester "funcionou sem problemas"; `bl4gyro.log`: `ps5 (HID) \| 250 motion packets/s` |
-| Same pad with Steam Input on for PlayStation | ✓ tester "funcionou sem problemas"; `bl4gyro.log`: `connected: PS5 (13)`, `PS5 \| 47–49 motion packets/s`; HID not opened (Steam first). `from_steam` axis signs hold for the DualSense too |
+| Same pad over USB (BT off, cable) | ✓ tester "funcionou sem problemas" ("worked without problems"); `bl4gyro.log`: `ps5 (HID) \| 250 motion packets/s` |
+| Same pad with Steam Input on for PlayStation | ✓ tester "funcionou sem problemas" ("worked without problems"); `bl4gyro.log`: `connected: PS5 (13)`, `PS5 \| 47–49 motion packets/s`; HID not opened (Steam first). `from_steam` axis signs hold for the DualSense too |

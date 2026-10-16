@@ -1,4 +1,5 @@
-# Builds the release zip players download: NativeGyro\ (mod + DLL + SDL3.dll), install/uninstall scripts, oak2 manifest, README, LICENSE.
+# Builds the release zip players download: NativeGyro\ (mod + DLL + SDL3.dll), Install.cmd + installer window, install/uninstall
+# scripts, oak2 manifest, README, LICENSE.
 # No .pdb, dev tools or LGPL files. Run after build.cmd: powershell -ExecutionPolicy Bypass -File scripts\package.ps1 [-OutDir dist]
 param([string]$OutDir)
 $ErrorActionPreference = 'Stop'
@@ -15,8 +16,9 @@ $name = "NativeGyro-$version"
 $stage = Join-Path $OutDir $name
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 New-Item -ItemType Directory -Force (Join-Path $stage 'NativeGyro') | Out-Null
-Copy-Item $init, $dll, $sdl (Join-Path $stage 'NativeGyro')
-Copy-Item (Join-Path $PSScriptRoot 'install.ps1'), (Join-Path $PSScriptRoot 'uninstall.ps1'), (Join-Path $PSScriptRoot 'steam-game-dir.ps1'),
+Copy-Item (Join-Path $repo 'mod\NativeGyro\*.py'), $dll, $sdl (Join-Path $stage 'NativeGyro')
+Copy-Item (Join-Path $PSScriptRoot 'Install.cmd'), (Join-Path $PSScriptRoot 'installer.ps1'), (Join-Path $PSScriptRoot 'install.ps1'),
+          (Join-Path $PSScriptRoot 'uninstall.ps1'), (Join-Path $PSScriptRoot 'steam-game-dir.ps1'),
           (Join-Path $repo 'README.md'), (Join-Path $repo 'LICENSE') $stage
 Copy-Item (Join-Path $repo 'evidence\B-oak2-install-manifest.txt') (Join-Path $stage 'oak2-install-manifest.txt')
 
