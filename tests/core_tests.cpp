@@ -1,11 +1,13 @@
 // Behaviour tests for the gyro core. Plain asserts; run by CTest.
 #include "gyro.hpp"
+#include "steam_motion.hpp"
 
 #include <cmath>
 #include <cstdio>
 #include <atomic>
 #include <chrono>
 #include <thread>
+#include <string>
 #include <vector>
 
 static int failures = 0;
@@ -323,6 +325,80 @@ static void manual_calibration_measures_bias_and_mutes_output_meanwhile()
     CHECK(std::fabs(after.yaw_deg) < 0.1 && std::fabs(after.pitch_deg) < 0.1);
 }
 
+static void calibration_reports_ok_and_progress_when_still()
+{
+    gyro::Processor p(plain_settings());
+    BiasedSensor sensor;
+    double t = 0;
+    CHECK(p.calibration() == gyro::Calibration::None);
+    p.calibrate(2.0);
+    CHECK(p.calibration() == gyro::Calibration::Running && near(p.calibration_progress(), 0.0));
+    run(p, sensor, t, 1.0);
+    CHECK(near(p.calibration_progress(), 0.5, 0.01));
+    run(p, sensor, t, 1.05);
+    CHECK(p.calibration() == gyro::Calibration::Ok && near(p.calibration_progress(), 1.0));
+}
+
+// Picked up or bumped while calibrating: report it and keep the previous offset instead of learning the motion.
+static void calibration_reports_moved_and_keeps_previous_offset()
+{
+    gyro::Processor p(plain_settings());
+    BiasedSensor sensor;
+    double t = 0;
+    p.calibrate(2.0);
+    run(p, sensor, t, 2.05); // good calibration first
+    p.calibrate(2.0);
+    run(p, sensor, t, 1.0);
+    run(p, sensor, t, 1.05, 40.f); // turned during the second half
+    CHECK(p.calibration() == gyro::Calibration::Moved);
+    const gyro::Delta after = run(p, sensor, t, 2.0);
+    CHECK(std::fabs(after.yaw_deg) < 0.1 && std::fabs(after.pitch_deg) < 0.1); // old bias still removed
+}
+
+// Held in the hand instead of lying flat: a slow, smooth 1 dps turn and a tilted controller are both rejected.
+static void calibration_rejects_slow_turn_and_not_flat()
+{
+    gyro::Processor p(plain_settings());
+    BiasedSensor sensor;
+    double t = 0;
+    p.calibrate(2.0);
+    run(p, sensor, t, 2.05);
+    CHECK(p.calibration() == gyro::Calibration::Ok);
+    float good[3];
+    p.calibration_offset(good);
+    CHECK(near(good[1], -2.0, 0.05)); // the BiasedSensor's yaw bias
+
+    p.calibrate(2.0);
+    for (const double end = t + 2.05; t < end; t += 0.005) { // hand slowly drifting: 0 -> 4 dps of yaw
+        gyro::Sample s = sensor.at(t, static_cast<float>(2.0 * (t - end + 2.05)));
+        p.process(s);
+    }
+    CHECK(p.calibration() == gyro::Calibration::Moved);
+    float kept[3];
+    p.calibration_offset(kept);
+    CHECK(near(kept[1], good[1], 1e-3));
+
+    p.calibrate(2.0);
+    for (const double end = t + 2.05; t < end; t += 0.005) { // standing on its side: gravity on X
+        gyro::Sample s = sensor.at(t);
+        s.accel_g[0] = 1.f;
+        s.accel_g[1] = 0.f;
+        p.process(s);
+    }
+    CHECK(p.calibration() == gyro::Calibration::NotFlat);
+}
+
+// Steam's EInputActionOrigin -> printed names (values from isteaminput.h; append-only enum).
+static void steam_origins_name_the_physical_buttons()
+{
+    CHECK(std::string(steam::origin_label(258)) == "X" && std::string(steam::origin_label(259)) == "O"); // PS5
+    CHECK(std::string(steam::origin_label(262)) == "L1");
+    CHECK(std::string(steam::origin_label(192)) == "A" && std::string(steam::origin_label(193)) == "B"); // Switch
+    CHECK(std::string(steam::origin_label(196)) == "L");
+    CHECK(std::string(steam::origin_label(114)) == "A" && std::string(steam::origin_label(119)) == "RB"); // Xbox One
+    CHECK(steam::origin_label(0) == nullptr && steam::origin_label(-1) == nullptr && steam::origin_label(9999) == nullptr);
+}
+
 static double yaw_over(gyro::Processor& p, double& t, double seconds, float yaw_dps)
 {
     double yaw = 0;
@@ -385,6 +461,10 @@ int main()
     auto_calibration_removes_bias_at_rest_but_keeps_real_turns();
     manual_calibration_measures_bias_and_mutes_output_meanwhile();
     slow_pan_is_kept_while_auto_calibration_is_suspended();
+    calibration_reports_ok_and_progress_when_still();
+    calibration_reports_moved_and_keeps_previous_offset();
+    calibration_rejects_slow_turn_and_not_flat();
+    steam_origins_name_the_physical_buttons();
     tightening_slows_tiny_motion_and_leaves_big_motion_alone();
     tiered_smoothing_keeps_big_motion_and_calms_jitter();
     if (failures) return 1;

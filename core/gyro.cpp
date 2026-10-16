@@ -15,6 +15,8 @@ constexpr float kSteamGPerUnit = 2.0f / 32768.0f;
 constexpr double kMaxGapS = 0.1;       // longer gaps (stall, reconnect) are not integrated
 constexpr float kYawRelaxFactor = 1.41f; // GyroWiki default for Player Space
 constexpr double kSmoothTimeS = 0.1;     // time constant of the smoothed tier
+constexpr float kCalibrationMaxSpreadDps = 3.f; // raw spread above this while calibrating = the controller moved
+constexpr double kCalibrationMinFlat = 0.9;     // gravity within ~25 deg of the controller's up/down axis = lying flat
 } // namespace
 
 Sample from_sdl(std::uint64_t sensor_ns, const float gyro_rad[3], const float accel_ms2[3])
@@ -59,7 +61,14 @@ void Processor::apply_calibration_mode()
 
 void Processor::calibrate(double seconds)
 {
-    calibration_left_s_ = seconds;
+    calibration_left_s_ = calibration_total_s_ = seconds;
+    calibration_ = Calibration::Running;
+    motion_.GetCalibrationOffset(previous_offset_[0], previous_offset_[1], previous_offset_[2]);
+    for (int i = 0; i < 3; ++i) {
+        raw_min_[i] = INFINITY;
+        raw_max_[i] = -INFINITY;
+        accel_sum_[i] = 0;
+    }
     motion_.SetCalibrationMode(GamepadMotionHelpers::Manual);
     motion_.ResetContinuousCalibration();
     motion_.StartContinuousCalibration();
@@ -77,9 +86,22 @@ Delta Processor::process(const Sample& s)
     motion_.ProcessMotion(s.gyro_dps[0], s.gyro_dps[1], s.gyro_dps[2], s.accel_g[0], s.accel_g[1],
                           s.accel_g[2], static_cast<float>(dt));
     if (calibrating()) {
+        bool moved = false;
+        for (int i = 0; i < 3; ++i) {
+            raw_min_[i] = std::min(raw_min_[i], s.gyro_dps[i]);
+            raw_max_[i] = std::max(raw_max_[i], s.gyro_dps[i]);
+            moved |= raw_max_[i] - raw_min_[i] > kCalibrationMaxSpreadDps;
+            accel_sum_[i] += s.accel_g[i];
+        }
         calibration_left_s_ -= dt;
         if (!calibrating()) {
             motion_.PauseContinuousCalibration();
+            const double g = std::sqrt(accel_sum_[0] * accel_sum_[0] + accel_sum_[1] * accel_sum_[1] +
+                                       accel_sum_[2] * accel_sum_[2]);
+            const bool flat = g > 0 && std::fabs(accel_sum_[1]) / g >= kCalibrationMinFlat; // SDL Y = pad's up
+            calibration_ = moved ? Calibration::Moved : flat ? Calibration::Ok : Calibration::NotFlat;
+            if (calibration_ != Calibration::Ok)
+                motion_.SetCalibrationOffset(previous_offset_[0], previous_offset_[1], previous_offset_[2], 1);
             apply_calibration_mode();
         }
         return {};
@@ -107,6 +129,14 @@ Delta Processor::process(const Sample& s)
     }
     rate_ = {-yaw, pitch};
     return {rate_.yaw_deg * dt, rate_.pitch_deg * dt};
+}
+
+void Processor::calibration_offset(float out[3]) { motion_.GetCalibrationOffset(out[0], out[1], out[2]); }
+
+double Processor::calibration_progress() const
+{
+    if (calibration_ != Calibration::Running) return calibration_ == Calibration::None ? 0 : 1;
+    return std::clamp(1 - calibration_left_s_ / calibration_total_s_, 0.0, 1.0);
 }
 
 void Processor::reset()

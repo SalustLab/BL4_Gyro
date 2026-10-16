@@ -1,5 +1,6 @@
 # End-to-end check of the release scripts against a fake Steam install in a temp folder (never the real game):
-# game folder detection, package contents, install from the extracted package, uninstall with and without -RemoveModManager.
+# game folder detection, package contents, install from the extracted package (settings kept on update), oak2 download
+# refusals, uninstall keeping/removing settings and with -RemoveModManager.
 # Run: powershell -NoProfile -ExecutionPolicy Bypass -File tests\scripts_check.ps1   (needs build\release\bl4gyro.dll)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
@@ -36,25 +37,49 @@ try {
     Expand-Archive $zip[0].FullName $pkg
     $root = (Get-ChildItem $pkg -Directory)[0].FullName
     $files = Get-ChildItem $root -Recurse -File | ForEach-Object { $_.FullName.Substring($root.Length + 1) } | Sort-Object
-    $expected = 'LICENSE', 'NativeGyro\__init__.py', 'NativeGyro\bl4gyro.dll', 'NativeGyro\SDL3.dll', 'README.md', 'install.ps1',
-                'oak2-install-manifest.txt', 'steam-game-dir.ps1', 'uninstall.ps1' | Sort-Object
+    $expected = 'LICENSE', 'NativeGyro\__init__.py', 'NativeGyro\panel.py', 'NativeGyro\state.py', 'NativeGyro\bl4gyro.dll',
+                'NativeGyro\SDL3.dll', 'README.md', 'Install.cmd', 'installer.ps1', 'install.ps1', 'oak2-install-manifest.txt',
+                'steam-game-dir.ps1', 'uninstall.ps1' | Sort-Object
     Check ((Compare-Object $expected $files) -eq $null) "package contents: $($files -join ', ')"
 
-    # Fake game with oak2-mod-manager (every file of its manifest), a game file and another mod.
+    # Without oak2: refused, nothing written; a wrong download is refused by its hash; a partial oak2 is never overwritten.
+    Touch (Join-Path $game 'OakGame\Binaries\Win64\Borderlands4.exe')
+    Check (Throws { & (Join-Path $root 'install.ps1') -GameDir $game *>$null }) 'missing oak2 -> refused'
+    Check (Throws { & (Join-Path $root 'install.ps1') -GameDir (Join-Path $tmp 'nowhere') *>$null }) 'not a game folder -> refused'
+    $fake = Join-Path $tmp 'fake-oak2.zip'
+    Touch (Join-Path $tmp 'fakezip\OakGame\Binaries\Win64\dsound.dll')
+    Compress-Archive (Join-Path $tmp 'fakezip\*') $fake
+    Check (Throws { & (Join-Path $root 'install.ps1') -GameDir $game -InstallModManager -ModManagerZip $fake *>$null }) 'hash mismatch -> refused'
+    Check (-not (Test-Path (Join-Path $game 'OakGame\Binaries\Win64\dsound.dll'))) 'nothing copied from a bad download'
+    Touch (Join-Path $game 'OakGame\Binaries\Win64\dsound.dll')
+    Check (Throws { & (Join-Path $root 'install.ps1') -GameDir $game -InstallModManager -ModManagerZip $fake *>$null }) 'partial oak2 -> refused'
+    Check (-not (Test-Path (Join-Path $game 'sdk_mods\NativeGyro'))) 'mod not installed when refused'
+
+    # Fake game with oak2-mod-manager (every file of its manifest), a game file and another mod with its settings.
     $manifest = Get-Content (Join-Path $root 'oak2-install-manifest.txt') | Where-Object { $_ -and -not $_.StartsWith('#') }
     $manifest | ForEach-Object { Touch (Join-Path $game $_) }
-    Touch (Join-Path $game 'OakGame\Binaries\Win64\Borderlands4.exe')
     Touch (Join-Path $game 'sdk_mods\OtherMod\__init__.py')
+    Set-Content (Join-Path $game 'sdk_mods\settings\OtherMod.json') '{"enabled": true}'
 
     & (Join-Path $root 'install.ps1') -GameDir $game | Out-Null
-    foreach ($f in '__init__.py', 'bl4gyro.dll', 'SDL3.dll') {
+    foreach ($f in '__init__.py', 'panel.py', 'state.py', 'bl4gyro.dll', 'SDL3.dll') {
         $a = Join-Path $game "sdk_mods\NativeGyro\$f"
         Check ((Test-Path $a) -and (Get-FileHash $a).Hash -eq (Get-FileHash (Join-Path $root "NativeGyro\$f")).Hash) "installed $f"
     }
+    # The game writes the settings; an update must keep them byte for byte, including a disabled mod.
+    $settings = Join-Path $game 'sdk_mods\settings\NativeGyro.json'
+    $saved = '{"options": {"Horizontal sensitivity": 3.0, "Gyro enabled": false}, "enabled": false}'
+    Set-Content $settings $saved
+    & (Join-Path $root 'install.ps1') -GameDir $game | Out-Null
+    Check ((Get-Content -Raw $settings).Trim() -eq $saved) 'update keeps settings'
 
     & (Join-Path $root 'uninstall.ps1') -GameDir $game | Out-Null
     Check (-not (Test-Path (Join-Path $game 'sdk_mods\NativeGyro'))) 'mod removed'
+    Check (Test-Path $settings) 'uninstall keeps settings by default'
     Check (Test-Path (Join-Path $game 'OakGame\Binaries\Win64\Plugins\pyunrealsdk.dll')) 'oak2 kept without -RemoveModManager'
+    & (Join-Path $root 'uninstall.ps1') -GameDir $game -RemoveSettings | Out-Null
+    Check (-not (Test-Path $settings)) '-RemoveSettings removes our settings'
+    Check (Test-Path (Join-Path $game 'sdk_mods\settings\OtherMod.json')) "another mod's settings kept"
 
     & (Join-Path $root 'uninstall.ps1') -GameDir $game -RemoveModManager | Out-Null
     $left = @($manifest | Where-Object { Test-Path (Join-Path $game $_) })

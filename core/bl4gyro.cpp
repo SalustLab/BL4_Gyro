@@ -4,9 +4,11 @@
 // rotation (gyro::Processor) and accumulates it. The NativeGyro sdkmod drains it once per camera update through
 // this C ABI (ctypes) and feeds it to AddYawInput/AddPitchInput on the game thread.
 #include <windows.h>
+#include <xinput.h>
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -97,6 +99,54 @@ std::mutex g_status_mutex;
 std::string g_status = "stopped";
 std::string g_replay_csv;
 
+// Structured status for the panel (bl4gyro_info); the sensor thread writes it, the game thread reads it.
+enum class Source { None, Steam, Hid, Replay, SteamUnavailable };
+struct Info {
+    Source source = Source::None;
+    double packets_per_s = 0;
+    double last_packet_s = -1; // now_s() of the last motion packet, -1 if none yet
+    double calibration_progress = 0;
+    gyro::Calibration calibration = gyro::Calibration::None;
+    double calibration_deadline_s = 0; // calibration without data past this reports "no data"
+    float offset[3] = {};             // gyro bias being subtracted (deg/s, SDL axes)
+};
+std::mutex g_info_mutex;
+Info g_info;
+
+template <class F> void update_info(F&& f)
+{
+    std::lock_guard lock(g_info_mutex);
+    f(g_info);
+}
+
+// Calibration state for bl4gyro_info, and a log line whenever the result or the subtracted offset changes (a wrong
+// offset turns into a steady camera drift, so it must be visible).
+void publish_calibration(gyro::Processor& proc)
+{
+    static gyro::Calibration logged_result = gyro::Calibration::None;
+    static float logged[3] = {};
+    float offset[3];
+    proc.calibration_offset(offset);
+    const gyro::Calibration result = proc.calibration();
+    update_info([&](Info& i) {
+        i.calibration = result;
+        i.calibration_progress = proc.calibration_progress();
+        std::copy_n(offset, 3, i.offset);
+    });
+    const bool moved_offset = std::fabs(offset[0] - logged[0]) + std::fabs(offset[1] - logged[1]) +
+                              std::fabs(offset[2] - logged[2]) > 0.05f;
+    if (result != logged_result && result != gyro::Calibration::Running) {
+        static const char* names[] = {"none", "running", "ok", "moved (previous offset kept)",
+                                      "not lying flat (previous offset kept)"};
+        log("manual calibration: %s", names[static_cast<int>(result)]);
+    }
+    if (result != gyro::Calibration::Running && (moved_offset || result != logged_result)) {
+        log("gyro offset now %+.3f %+.3f %+.3f deg/s (pitch yaw roll)", offset[0], offset[1], offset[2]);
+        std::copy_n(offset, 3, logged);
+    }
+    logged_result = result;
+}
+
 void set_status(std::string s)
 {
     std::lock_guard lock(g_status_mutex);
@@ -126,10 +176,15 @@ struct Ticker {
 
 void apply_pending(gyro::Processor& proc)
 {
-    if (g_cfg_dirty.exchange(false)) proc.configure(config().motion);
+    if (g_cfg_dirty.exchange(false)) {
+        const bool before = proc.auto_calibrating();
+        proc.configure(config().motion);
+        if (proc.auto_calibrating() != before) log("automatic calibration %s", before ? "off" : "on");
+    }
     const double seconds = g_calibrate.exchange(0);
     if (seconds > 0) {
         proc.calibrate(seconds);
+        update_info([&](Info& i) { i.calibration_deadline_s = now_s() + seconds + 2; });
         log("manual calibration started (%.1f s) - keep the controller still", seconds);
     }
 }
@@ -162,6 +217,11 @@ void replay_loop(const std::string& path)
     set_status("replaying " + path);
     while (g_run && i < samples.size()) {
         apply_pending(proc);
+        update_info([&](Info& info) {
+            info.source = Source::Replay;
+            info.last_packet_s = now_s();
+        });
+        publish_calibration(proc);
         while (i < samples.size() && samples[i].t_s - t0 <= now_s() - wall0) {
             const gyro::Delta d = proc.process(samples[i++]);
             total.yaw_deg += d.yaw_deg;
@@ -233,6 +293,105 @@ struct HidPad {
     }
 };
 
+// Controller buttons for the panel, the combo and the gyro button. BL4 reads the pad through a path the mod's
+// input hook never sees, so the DLL reads it itself: SDL when the HID pad is open, otherwise XInput, which is how
+// the game sees a Steam Input controller (Steam's virtual pad). Bits: 0 A, 1 B, 2 X, 3 Y, 4 View, 5 Menu, 6 L3,
+// 7 R3, 8 LB, 9 RB, 10-13 D-pad up/down/left/right, 14 LT, 15 RT (positional names, Xbox layout). 0 while the game
+// window is not focused.
+std::atomic<unsigned> g_buttons{0};
+
+struct XInputPads {
+    using GetState = DWORD(WINAPI*)(DWORD, XINPUT_STATE*);
+    GetState get_state = nullptr;
+    bool connected[XUSER_MAX_COUNT] = {};
+    double next_scan = 0;
+
+    void init()
+    {
+        for (const wchar_t* dll : {L"xinput1_4.dll", L"xinput9_1_0.dll"}) {
+            if (HMODULE m = LoadLibraryW(dll)) {
+                get_state = reinterpret_cast<GetState>(GetProcAddress(m, "XInputGetState"));
+                if (get_state) return;
+            }
+        }
+        log("XInput unavailable: controller buttons only through HID");
+    }
+
+    unsigned read(double now)
+    {
+        if (!get_state) return 0;
+        const bool scan = now >= next_scan; // probing empty slots is slow: only once a second
+        if (scan) next_scan = now + 1;
+        unsigned bits = 0;
+        for (DWORD i = 0; i < XUSER_MAX_COUNT; ++i) {
+            if (!connected[i] && !scan) continue;
+            XINPUT_STATE st{};
+            connected[i] = get_state(i, &st) == ERROR_SUCCESS;
+            if (!connected[i]) continue;
+            const WORD b = st.Gamepad.wButtons;
+            const struct { WORD x; unsigned bit; } map[] = {
+                {XINPUT_GAMEPAD_A, 0}, {XINPUT_GAMEPAD_B, 1}, {XINPUT_GAMEPAD_X, 2}, {XINPUT_GAMEPAD_Y, 3},
+                {XINPUT_GAMEPAD_BACK, 4}, {XINPUT_GAMEPAD_START, 5}, {XINPUT_GAMEPAD_LEFT_THUMB, 6},
+                {XINPUT_GAMEPAD_RIGHT_THUMB, 7}, {XINPUT_GAMEPAD_LEFT_SHOULDER, 8}, {XINPUT_GAMEPAD_RIGHT_SHOULDER, 9},
+                {XINPUT_GAMEPAD_DPAD_UP, 10}, {XINPUT_GAMEPAD_DPAD_DOWN, 11}, {XINPUT_GAMEPAD_DPAD_LEFT, 12},
+                {XINPUT_GAMEPAD_DPAD_RIGHT, 13}};
+            for (const auto& m : map)
+                if (b & m.x) bits |= 1u << m.bit;
+            if (st.Gamepad.bLeftTrigger > 128) bits |= 1u << 14;
+            if (st.Gamepad.bRightTrigger > 128) bits |= 1u << 15;
+        }
+        return bits;
+    }
+};
+
+unsigned sdl_buttons(SDL_Gamepad* pad)
+{
+    const SDL_GamepadButton map[] = {SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_WEST,
+                                     SDL_GAMEPAD_BUTTON_NORTH, SDL_GAMEPAD_BUTTON_BACK, SDL_GAMEPAD_BUTTON_START,
+                                     SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK,
+                                     SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER,
+                                     SDL_GAMEPAD_BUTTON_DPAD_UP, SDL_GAMEPAD_BUTTON_DPAD_DOWN,
+                                     SDL_GAMEPAD_BUTTON_DPAD_LEFT, SDL_GAMEPAD_BUTTON_DPAD_RIGHT};
+    unsigned bits = 0;
+    for (unsigned i = 0; i < std::size(map); ++i)
+        if (SDL_GetGamepadButton(pad, map[i])) bits |= 1u << i;
+    if (SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER) > 16000) bits |= 1u << 14;
+    if (SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) > 16000) bits |= 1u << 15;
+    return bits;
+}
+
+// Printed names of the buttons the panel uses, "confirm|back|left shoulder|right shoulder" (bottom face, right face,
+// LB, RB by position), so hints read "X / O" on a DualSense and follow Steam's Nintendo-layout setting. Empty when
+// unknown: the mod then names them by controller family.
+std::mutex g_names_mutex;
+std::string g_button_names;
+
+std::string steam_button_names(const steam::Input& input, steam::Handle h)
+{
+    std::string names;
+    for (int xbox : {0, 1, 4, 5}) { // EXboxOrigin A, B, LeftBumper, RightBumper
+        const char* label = steam::origin_label(input.origin_for_xbox(h, xbox));
+        if (!label) return {};
+        names += (names.empty() ? "" : "|") + std::string(label);
+    }
+    return names;
+}
+
+std::string sdl_button_names(SDL_Gamepad* pad)
+{
+    static const char* face[] = {nullptr, "A", "B", "X", "Y", "X", "O", "Square", "Triangle"}; // SDL_GamepadButtonLabel
+    const int ok = SDL_GetGamepadButtonLabel(pad, SDL_GAMEPAD_BUTTON_SOUTH);
+    const int back = SDL_GetGamepadButtonLabel(pad, SDL_GAMEPAD_BUTTON_EAST);
+    if (ok <= 0 || ok >= 9 || back <= 0 || back >= 9) return {};
+    const SDL_GamepadType type = SDL_GetGamepadType(pad);
+    const bool ps = type == SDL_GAMEPAD_TYPE_PS3 || type == SDL_GAMEPAD_TYPE_PS4 || type == SDL_GAMEPAD_TYPE_PS5;
+    const bool nintendo = type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO ||
+                          type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT ||
+                          type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT ||
+                          type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
+    return std::string(face[ok]) + "|" + face[back] + (ps ? "|L1|R1" : nintendo ? "|L|R" : "|LB|RB");
+}
+
 // SDL keeps reporting while the game is in the background; Steam sends nothing then, so match it.
 bool game_has_focus()
 {
@@ -252,7 +411,11 @@ void sensor_loop()
     double next_open = 0, window_start = now_s(), next_log = now_s() + 10;
     int packets = 0, type = 0, loops = 0;
     bool rescan = true; // pads already plugged in at start send no ADDED event we could miss
+    XInputPads xinput;
+    double next_buttons = 0;
     hid.init();
+    xinput.init();
+    double last_packet = -1;
     while (g_run) {
         ++loops;
         apply_pending(proc);
@@ -289,6 +452,7 @@ void sensor_loop()
                     proc.process(gyro::from_steam(now, m.rot_vel, m.pos_accel));
                     g_hold.set(proc.rate(), now);
                     ++packets;
+                    last_packet = now;
                     trace("P,%.6f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.7f,%.7f,%.7f,%.7f\n", now, m.rot_vel[0], m.rot_vel[1],
                           m.rot_vel[2], m.pos_accel[0], m.pos_accel[1], m.pos_accel[2], m.rot_quat[0], m.rot_quat[1],
                           m.rot_quat[2], m.rot_quat[3]);
@@ -317,6 +481,7 @@ void sensor_loop()
                         proc.process(s);
                         g_hold.set(proc.rate(), now);
                         ++packets;
+                        last_packet = now;
                         // HID rows carry the converted sample (deg/s, g, SDL axes) and no quaternion.
                         trace("P,%.6f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,0,0,0,0\n", now, s.gyro_dps[0], s.gyro_dps[1],
                               s.gyro_dps[2], s.accel_g[0], s.accel_g[1], s.accel_g[2]);
@@ -331,6 +496,16 @@ void sensor_loop()
                 }
             }
         }
+        if (now >= next_buttons) { // ~125 Hz is plenty for menu input
+            next_buttons = now + 0.008;
+            g_buttons = !game_has_focus() ? 0 : hid.pad ? sdl_buttons(hid.pad) : xinput.read(now);
+        }
+        update_info([&](Info& i) {
+            i.source = active ? Source::Steam : hid.pad ? Source::Hid : input.is_open() || hid.ready ? Source::None
+                                                                                                  : Source::SteamUnavailable;
+            i.last_packet_s = last_packet;
+        });
+        publish_calibration(proc);
         if (now - window_start >= 2) {
             char status[160];
             const std::string source = active    ? steam::type_name(type)
@@ -341,6 +516,12 @@ void sensor_loop()
                           packets / (now - window_start), loops / (now - window_start),
                           proc.calibrating() ? " | calibrating" : "");
             set_status(status);
+            update_info([&](Info& i) { i.packets_per_s = packets / (now - window_start); });
+            {
+                std::string names = active ? steam_button_names(input, active) : hid.pad ? sdl_button_names(hid.pad) : "";
+                std::lock_guard lock(g_names_mutex);
+                g_button_names = std::move(names); // refreshed every 2 s: follows reconnects and layout changes
+            }
             trace("L,%.6f,%d,%d\n", now, loops, packets);
             loops = 0;
             if (now >= next_log) {
@@ -384,6 +565,7 @@ BL4GYRO_API int bl4gyro_start(const wchar_t* log_path, const char* replay_csv)
     g_hold.set({}, now_s()); // drop anything left from a previous run
     g_hold.take(now_s());
     g_cfg_dirty = true;
+    update_info([](Info& i) { i = Info{}; });
     g_run = true;
     g_thread = std::thread(sensor_thread);
     log("bl4gyro started%s", g_replay_csv.empty() ? "" : " (replay)");
@@ -395,6 +577,7 @@ BL4GYRO_API void bl4gyro_stop()
     g_run = false;
     if (g_thread.joinable()) g_thread.join();
     set_trace(false);
+    g_buttons = 0;
     set_status("stopped");
     log("bl4gyro stopped");
     std::lock_guard lock(g_log_mutex);
@@ -442,6 +625,39 @@ BL4GYRO_API void bl4gyro_take(int ads, double* yaw_deg, double* pitch_deg)
 BL4GYRO_API void bl4gyro_trace_line(const char* text)
 {
     if (text) trace("%s,%.6f,%s\n", "R", now_s(), text);
+}
+
+// Printed button names (see g_button_names), "" when unknown. Returns 1 when a name list was written.
+BL4GYRO_API int bl4gyro_button_names(char* buf, int size)
+{
+    if (!buf || size <= 0) return 0;
+    std::lock_guard lock(g_names_mutex);
+    std::snprintf(buf, static_cast<size_t>(size), "%s", g_button_names.c_str());
+    return g_button_names.empty() ? 0 : 1;
+}
+
+// Controller buttons as a bit mask (see g_buttons). Read by the mod once per camera update.
+BL4GYRO_API unsigned bl4gyro_buttons() { return g_buttons; }
+
+// Panel status as numbers: [0] source (0 none, 1 Steam, 2 HID, 3 replay, 4 Steam Input unavailable),
+// [1] motion packets/s (2 s window), [2] seconds since the last packet (-1 none yet), [3] calibration progress 0..1,
+// [4] calibration (0 none, 1 running, 2 ok, 3 moved / 4 not lying flat: previous offset kept, 5 running without
+// data past its deadline), [5..7] gyro offset being subtracted (deg/s, pitch yaw roll).
+// Returns how many values were written.
+BL4GYRO_API int bl4gyro_info(double* out, int n)
+{
+    if (!out || n <= 0) return 0;
+    std::lock_guard lock(g_info_mutex);
+    const Info& i = g_info;
+    const double now = now_s();
+    int calibration = static_cast<int>(i.calibration);
+    if (i.calibration == gyro::Calibration::Running && now > i.calibration_deadline_s) calibration = 5;
+    const double values[] = {static_cast<double>(i.source), i.packets_per_s,
+                             i.last_packet_s < 0 ? -1 : now - i.last_packet_s, i.calibration_progress,
+                             static_cast<double>(calibration), i.offset[0], i.offset[1], i.offset[2]};
+    const int count = std::min(n, static_cast<int>(std::size(values)));
+    std::copy_n(values, count, out);
+    return count;
 }
 
 BL4GYRO_API int bl4gyro_status(char* buf, int size)
