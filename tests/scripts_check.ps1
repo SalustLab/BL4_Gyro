@@ -36,7 +36,7 @@ try {
     Expand-Archive $zip[0].FullName $pkg
     $root = (Get-ChildItem $pkg -Directory)[0].FullName
     $files = Get-ChildItem $root -Recurse -File | ForEach-Object { $_.FullName.Substring($root.Length + 1) } | Sort-Object
-    $expected = 'LICENSE', 'NativeGyro\__init__.py', 'NativeGyro\bl4gyro.dll', 'README.md', 'install.ps1',
+    $expected = 'LICENSE', 'NativeGyro\__init__.py', 'NativeGyro\bl4gyro.dll', 'NativeGyro\SDL3.dll', 'README.md', 'install.ps1',
                 'oak2-install-manifest.txt', 'steam-game-dir.ps1', 'uninstall.ps1' | Sort-Object
     Check ((Compare-Object $expected $files) -eq $null) "package contents: $($files -join ', ')"
 
@@ -47,7 +47,7 @@ try {
     Touch (Join-Path $game 'sdk_mods\OtherMod\__init__.py')
 
     & (Join-Path $root 'install.ps1') -GameDir $game | Out-Null
-    foreach ($f in '__init__.py', 'bl4gyro.dll') {
+    foreach ($f in '__init__.py', 'bl4gyro.dll', 'SDL3.dll') {
         $a = Join-Path $game "sdk_mods\NativeGyro\$f"
         Check ((Test-Path $a) -and (Get-FileHash $a).Hash -eq (Get-FileHash (Join-Path $root "NativeGyro\$f")).Hash) "installed $f"
     }
