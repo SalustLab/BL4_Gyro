@@ -28,6 +28,12 @@ Por que esta forma:
 2. **Sensor no Steam.** O TT Max só expõe IMU em Switch mode, e o BL4 só vê os botões nesse modo via Steam Input.
    Com Steam Input ativo, o overlay esconde o HID físico do processo do jogo; a fonte é então a Steam Input API do
    próprio jogo, chamada pelos exports *flat* do `steam_api64.dll`, sem Steamworks SDK.
+   **Fallback HID (SDL3).** Quando a Steam Input não entrega nenhum controle ao jogo (ex.: DualSense com Steam
+   Input desligado, já que o BL4 suporta PlayStation nativamente), o DLL lê o HID do controle pelo SDL3, só com os
+   drivers HIDAPI (RawInput/XInput/WGI/GameInput/DirectInput desligados; LEDs intocados). Uma fonte por vez: se
+   um controle aparecer na Steam Input, o HID é solto. Amostras com o mesmo `sensor_timestamp` são descartadas:
+   o Switch2Connect repete a mesma leitura do IMU (~65 Hz) em relatórios de 1 kHz, e `dt = 0` zeraria a
+   velocidade mantida (medido: 4678 de 5002 amostras repetidas). Sem foco no jogo, as amostras são ignoradas.
 3. **Câmera nativa.** `AddYawInput`/`AddPitchInput` são o caminho do próprio look input. Medido: exato
    (×2.5/×−2.5), sem aceleração/suavização, aplicado no frame seguinte. `SetControlRotation` não persiste: a câmera
    Gbx reescreve a rotação.
@@ -39,7 +45,7 @@ Por que esta forma:
 |---|---|
 | `core/gyro.hpp/.cpp` | Conversões SDL/Steam → °/s e g (eixos SDL), `Processor`, `RateHold`, `to_camera` |
 | `core/steam_motion.hpp/.cpp` | ISteamInput por exports flat; `has_data` (pacote zerado = janela sem foco) |
-| `core/bl4gyro.cpp` | `bl4gyro.dll`: thread do sensor, replay de CSV, log, trace opcional, ABI C |
+| `core/bl4gyro.cpp` | `bl4gyro.dll`: thread do sensor (Steam Input, fallback HID por SDL3), replay de CSV, log, trace opcional, ABI C |
 | `mod/NativeGyro/__init__.py` | sdkmod: opções, hook por frame, gate, ADS, injeção |
 | `diag/ttmax_diag.cpp` | `ttmax-diag.exe`: `hid`, `sdl`, `steam`, com protocolo guiado e evidência CSV |
 | `tools/probe/` | probe da Fase B (dev): medições de injeção, call log, membros, mapeamentos, monitor de gate |
@@ -93,5 +99,6 @@ medido em jogo: −0,013 °/s pitch, −0,020 °/s yaw.
   threads.
 - `dll_replay`: ABI via ctypes, replay, total exato a 30 e 144 fps.
 
-SDL3 3.4.16 vem por FetchContent com SHA-256 fixado (só o diagnóstico usa). GamepadMotionHelpers v10 está
+SDL3 3.4.16 vem por FetchContent com SHA-256 fixado (diagnóstico e fallback HID do DLL; `SDL3.dll`, licença
+zlib, vai no pacote ao lado do `bl4gyro.dll`). GamepadMotionHelpers v10 está
 vendorizado (MIT).

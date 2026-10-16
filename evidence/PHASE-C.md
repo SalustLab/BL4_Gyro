@@ -59,3 +59,30 @@ Package `NativeGyro-0.1.0.zip` (`0c294c4`, zip SHA-256 `990AF939…6E13`, DLL `5
 | `bl4gyro.dll` imports | `KERNEL32.dll` only (static CRT), no VC++ runtime needed |
 
 Next: original Switch Pro Controller and DualSense.
+
+## HID fallback: Switch 2 Pro Controller via Switch2Connect (2026-10-15)
+
+Setup: Switch 2 Pro Controller through Switch2Connect emulating a USB DualSense (`054C:0CE6`), Steam
+"PlayStation Controller Support" = enabled only in games without support (so Steam Input is off for BL4).
+
+| Build | Tester report | Measured cause | Fix |
+|---|---|---|---|
+| `79b49d1`-era DLL (Steam Input only) | "não funcionou" | `bl4gyro.log`: `no controller \| 0 motion packets/s`; Steam Input gives the game 0 controllers | SDL3 HID fallback when Steam Input has no controller |
+| HID fallback, first build | works, but "terrível, travado, mal mexe" | 1000 packets/s; `ttmax-diag sdl --rest 5`: 4678 of 5002 samples with `dt = 0` (one IMU reading, ~15 ms apart, repeated over 1 kHz reports); each repeat zeroed the held rate | drop samples whose `sensor_timestamp` repeats |
+| HID fallback, dedupe | **"ficou ótimo"** | `bl4gyro.log`: `ps5 (HID) \| 65–67 motion packets/s` | — |
+
+At rest via SDL (same controller): bias pitch +0.001, yaw −0.020 °/s; noise σ ≤ 0.12 °/s; accel 1.02 g.
+Periods of `0 motion packets/s` in the log are the game out of focus (samples are dropped then).
+
+## HID fallback: genuine DualSense over Bluetooth (2026-10-15)
+
+Same build (HID fallback with dedupe), Switch2Connect off, Steam Input off for PlayStation.
+
+| Check | Result |
+|---|---|
+| `ttmax-diag sdl --rest 5` | 630 samples/s, 0 repeated timestamps, bias ≤ 0.14 °/s, σ ≤ 0.10 °/s, accel 0.98 g |
+| `bl4gyro.log` in game | `ps5 (HID) \| 618–641 motion packets/s` |
+| Gyro aim (tester) | ✓ **"funcionou perfeitamente"** |
+| Haptics and adaptive triggers with SDL reading the pad | ✓ unaffected |
+| Same pad over USB (BT off, cable) | ✓ tester "funcionou sem problemas"; `bl4gyro.log`: `ps5 (HID) \| 250 motion packets/s` |
+| Same pad with Steam Input on for PlayStation | ✓ tester "funcionou sem problemas"; `bl4gyro.log`: `connected: PS5 (13)`, `PS5 \| 47–49 motion packets/s`; HID not opened (Steam first). `from_steam` axis signs hold for the DualSense too |

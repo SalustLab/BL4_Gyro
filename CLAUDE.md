@@ -3,8 +3,9 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Native gyro aim for Borderlands 4 (PC, Steam). The controller's real gyro is added to the game camera through the
-game's own look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick emulation. The main target is the
-GuliKit TT Max in Switch mode, and the tested game build is Steam `25372571` (`TESTED_BUILD` in the mod).
+game's own look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick emulation. Tested controllers: GuliKit TT Max in
+Switch mode ("generic gyro controller" mode, via Steam Input), DualSense (HID or Steam Input) and Switch 2 Pro via
+Switch2Connect (HID). The tested game build is Steam `25372571` (`TESTED_BUILD` in the mod).
 
 User-facing docs (`README.md`, `docs/`, `CONTEXT.md`, `evidence/*.md`) and commit messages are in **pt-BR**. Code,
 comments and identifiers are in English. Commit subjects start with the project phase, e.g. `C: ...`
@@ -53,7 +54,9 @@ The mod has two halves joined by a small C interface (`BL4GYRO_API` exports, loa
 
 1. **`bl4gyro.dll`** (`core/bl4gyro.cpp` on top of the `gyro_core` static lib). It runs a sensor thread at about
    1 kHz that polls `ISteamInput::GetMotionData` through the game's already-loaded `steam_api64.dll`, using flat
-   exports with no Steamworks SDK (`core/steam_motion.*`). A new packet goes through `gyro::from_steam`, then
+   exports with no Steamworks SDK (`core/steam_motion.*`). When Steam Input hands the game no controller (e.g. a
+   DualSense with Steam Input off), it falls back to the pad's HID through SDL3 (HIDAPI drivers only, one source
+   at a time, `gyro::from_sdl`, repeated `sensor_timestamp`s dropped). A new packet goes through `gyro::from_steam`, then
    `gyro::Processor` (GamepadMotionHelpers: calibration, Player/Local space, tightening, smoothing), then
    `gyro::RateHold`.
 2. **`mod/NativeGyro/__init__.py`** is an sdkmod that runs in oak2-mod-manager's embedded Python. It hooks
@@ -112,5 +115,6 @@ measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/
 ## Third party
 
 `third_party/GamepadMotionHelpers` (v10, MIT) is vendored. Don't edit it. SDL3 3.4.16 is fetched by CMake with a
-pinned SHA-256 and is used only by `ttmax-diag`. oak2-mod-manager, unrealsdk and pyunrealsdk (LGPL-3.0) are never
+pinned SHA-256 and is used by `ttmax-diag` and by `bl4gyro.dll`'s HID fallback, so `SDL3.dll` (zlib) ships next to
+`bl4gyro.dll` in the package and the install. oak2-mod-manager, unrealsdk and pyunrealsdk (LGPL-3.0) are never
 redistributed, and `package.ps1` must not include them.

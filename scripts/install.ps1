@@ -22,7 +22,7 @@ if (-not (Test-Path $dll)) { throw "Build first (build.cmd): $dll is missing." }
 $target = Join-Path $GameDir 'sdk_mods\NativeGyro'
 New-Item -ItemType Directory -Force $target | Out-Null
 Copy-Item $init $target -Force
-Copy-Item $dll $target -Force
+Copy-Item $dll, (Join-Path (Split-Path $dll) 'SDL3.dll') $target -Force
 
 # The Phase B probe binds keys that move the camera; it is a development tool only.
 $probe = Join-Path $GameDir 'sdk_mods\NativeGyroProbe'

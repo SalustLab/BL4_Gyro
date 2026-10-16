@@ -4,15 +4,32 @@ Mira por movimento **nativa** para o Borderlands 4 no PC. A rotação real do gi
 câmera do próprio jogo, pelo mesmo caminho do look input (`AddYawInput`/`AddPitchInput`). Não há emulação de mouse
 nem de analógico: o analógico direito continua funcionando junto e os ícones não trocam para teclado/mouse.
 
-Prioridade: **GuliKit TT Max (NS69)** em Switch mode. Testado no Steam build **25372571**.
+Testado no Steam build **25372571**.
+
+## Controles
+
+| Modo | Como o mod lê o gyro | Testado em jogo | Deve funcionar (não verificado) |
+|---|---|---|---|
+| **Controle genérico com gyro** | Steam Input | **GuliKit TT Max (NS69)** em Switch mode, Bluetooth | Pro Controller original do Switch (mesmo protocolo e tipo Steam do TT Max), Steam Controller (2026) e outros controles com gyro que a Steam Input reconhece |
+| **DualSense** | HID direto (Steam Input desligado para PlayStation) ou Steam Input | DualSense por Bluetooth e USB, nos dois caminhos; vibração e gatilhos adaptáveis continuam funcionando | — |
+| **Switch 2 Pro Controller** | HID direto, via [Switch2Connect](https://github.com/TommyWabg/Switch2Connect) em modo DualSense | Switch 2 Pro Controller | — |
+
+O mod usa a Steam Input quando ela entrega um controle ao jogo. Se não entrega nenhum (ex.: DualSense com Steam
+Input desligado, já que o BL4 suporta PlayStation nativamente), ele lê o controle direto pelo HID. `Show status`
+mostra qual fonte está em uso (`ps5 (HID)` = HID direto).
 
 ## Requisitos
 
 - Borderlands 4 (Steam).
 - [oak2-mod-manager](https://github.com/bl-sdk/oak2-mod-manager/releases) **v0.3** instalado na pasta do jogo.
-- Controle com giroscópio reconhecido pelo Steam Input. No TT Max: **Switch mode** (duplo clique em Mode),
-  Bluetooth testado.
-- Steam > Configurações > Controle: suporte a **Nintendo Switch** ativado. Não configure gyro como mouse no Steam.
+- Um controle com giroscópio (veja [Controles](#controles)).
+- Controle genérico com gyro (TT Max): **Switch mode** (duplo clique em Mode) e, em Steam > Configurações >
+  Controle, suporte a **Nintendo Switch** ativado.
+- DualSense: funciona com o suporte a PlayStation da Steam desligado para o jogo (o BL4 recebe o controle nativo)
+  ou ligado.
+- Switch 2 Pro Controller: Switch2Connect em modo **PS5/DualSense**, com o gyro interno do app (mouse/analógico)
+  desligado.
+- Não configure gyro como mouse na Steam nem em outro app: a rotação dobraria.
 
 ## Instalação
 
@@ -24,7 +41,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 
 O script acha a pasta do jogo em qualquer biblioteca da Steam. Se não achar, informe a pasta:
 `install.ps1 -GameDir "D:\...\Borderlands 4"`. Instalação manual: copie a pasta `NativeGyro` para
-`<pasta do jogo>\sdk_mods\`. Não compacte nem renomeie a pasta: o mod carrega o `bl4gyro.dll` de dentro dela.
+`<pasta do jogo>\sdk_mods\`. Não compacte nem renomeie a pasta: o mod carrega o `bl4gyro.dll` e o `SDL3.dll` de dentro dela.
 
 No jogo: console (tecla definida no oak2; aqui F6) → `mods` → **Native Gyro Aim** → `E`. Depois disso o mod liga
 sozinho nas próximas vezes. Para ver o texto do menu, abra o console grande (tecla do console duas vezes).
@@ -88,6 +105,7 @@ Código aberto sob a licença MIT (`LICENSE`).
 ## Terceiros
 
 - GamepadMotionHelpers v10 (MIT, vendorizado em `third_party/`).
-- SDL3 3.4.16 (zlib), baixado no build, só no diagnóstico.
+- SDL3 3.4.16 (zlib), baixado no build; o `SDL3.dll` vai no pacote para a leitura HID direta e é usado no
+  diagnóstico.
 - oak2-mod-manager / unrealsdk / pyunrealsdk (LGPL-3.0): não redistribuídos, instalados pelo usuário.
 - Referências de design: Returnal-Native-Gyro, GyroUE/GyroLib, NeonGyro (MIT) e GyroWiki. Nenhum código copiado.

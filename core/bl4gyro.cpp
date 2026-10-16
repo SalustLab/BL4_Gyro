@@ -1,5 +1,6 @@
 // bl4gyro.dll - runs inside Borderlands 4. A sensor thread reads the controller's motion through the game's
-// own Steam Input (Steam only delivers it while the game window has focus), turns it into calibrated controller
+// own Steam Input (Steam only delivers it while the game window has focus) or, when Steam Input hands the game
+// no controller, straight from the pad's HID through SDL; it turns it into calibrated controller
 // rotation (gyro::Processor) and accumulates it. The NativeGyro sdkmod drains it once per camera update through
 // this C ABI (ctypes) and feeds it to AddYawInput/AddPitchInput on the game thread.
 #include <windows.h>
@@ -14,6 +15,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <SDL3/SDL.h>
 
 #include "gyro.hpp"
 #include "steam_motion.hpp"
@@ -173,15 +176,83 @@ void replay_loop(const std::string& path)
     set_status("replay done");
 }
 
-void steam_loop()
+// Fallback source when Steam Input hands the game no controller, e.g. a DualSense with Steam Input off (BL4
+// supports PlayStation pads natively). Only SDL's HIDAPI drivers are enabled: SDL must not register RawInput or
+// open the XInput/WGI/GameInput devices the game itself reads, and must not change the pad's LEDs.
+struct HidPad {
+    bool ready = false;
+    SDL_Gamepad* pad = nullptr;
+    float accel[3] = {0, 9.80665f, 0};
+    std::uint64_t last_ns = 0;
+
+    void init()
+    {
+        for (const char* hint : {SDL_HINT_JOYSTICK_RAWINPUT, SDL_HINT_JOYSTICK_WGI, SDL_HINT_JOYSTICK_GAMEINPUT,
+                                 SDL_HINT_XINPUT_ENABLED, SDL_HINT_JOYSTICK_DIRECTINPUT,
+                                 SDL_HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED, SDL_HINT_JOYSTICK_HIDAPI_SWITCH_PLAYER_LED,
+                                 SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED})
+            SDL_SetHint(hint, "0");
+        SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1"); // the game window is not SDL's
+        ready = SDL_Init(SDL_INIT_GAMEPAD);
+        if (ready) log("HID (SDL %d.%d.%d) ready", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_MICRO_VERSION);
+        else log("HID unavailable: SDL_Init failed: %s", SDL_GetError());
+    }
+
+    const char* name() const { return SDL_GetGamepadStringForType(SDL_GetGamepadType(pad)); }
+
+    // Opens the first gamepad that has a gyro.
+    bool open_first()
+    {
+        int count = 0;
+        SDL_JoystickID* ids = SDL_GetGamepads(&count);
+        for (int i = 0; ids && i < count && !pad; ++i) {
+            pad = SDL_OpenGamepad(ids[i]);
+            if (pad && !SDL_GamepadHasSensor(pad, SDL_SENSOR_GYRO)) {
+                SDL_CloseGamepad(pad);
+                pad = nullptr;
+            }
+        }
+        SDL_free(ids);
+        if (!pad) return false;
+        SDL_SetGamepadSensorEnabled(pad, SDL_SENSOR_GYRO, true);
+        if (SDL_GamepadHasSensor(pad, SDL_SENSOR_ACCEL)) SDL_SetGamepadSensorEnabled(pad, SDL_SENSOR_ACCEL, true);
+        return true;
+    }
+
+    void close()
+    {
+        if (pad) SDL_CloseGamepad(pad);
+        pad = nullptr;
+    }
+
+    void quit()
+    {
+        close();
+        if (ready) SDL_Quit();
+        ready = false;
+    }
+};
+
+// SDL keeps reporting while the game is in the background; Steam sends nothing then, so match it.
+bool game_has_focus()
+{
+    DWORD pid = 0;
+    GetWindowThreadProcessId(GetForegroundWindow(), &pid);
+    return pid == GetCurrentProcessId();
+}
+
+void sensor_loop()
 {
     steam::Input input;
+    HidPad hid;
     gyro::Processor proc;
     Ticker ticker;
     steam::Handle active = 0;
     steam::MotionData prev{};
     double next_open = 0, window_start = now_s(), next_log = now_s() + 10;
     int packets = 0, type = 0, loops = 0;
+    bool rescan = true; // pads already plugged in at start send no ADDED event we could miss
+    hid.init();
     while (g_run) {
         ++loops;
         apply_pending(proc);
@@ -199,8 +270,13 @@ void steam_loop()
                 log("controller %llu disconnected", static_cast<unsigned long long>(active));
                 active = 0;
                 proc.reset();
+                rescan = true;
             }
             if (!active && !handles.empty()) {
+                if (hid.pad) {
+                    log("HID %s released: Steam Input has a controller", hid.name());
+                    hid.close();
+                }
                 active = handles.front();
                 type = input.type(active);
                 proc.reset();
@@ -219,10 +295,49 @@ void steam_loop()
                 }
             }
         }
+        if (hid.ready) {
+            SDL_Event ev;
+            while (SDL_PollEvent(&ev)) {
+                if (ev.type == SDL_EVENT_GAMEPAD_ADDED) {
+                    rescan = true;
+                } else if (ev.type == SDL_EVENT_GAMEPAD_REMOVED && hid.pad && ev.gdevice.which == SDL_GetGamepadID(hid.pad)) {
+                    log("HID %s disconnected", hid.name());
+                    hid.close();
+                    proc.reset();
+                    rescan = true;
+                } else if (ev.type == SDL_EVENT_GAMEPAD_SENSOR_UPDATE && hid.pad && ev.gsensor.which == SDL_GetGamepadID(hid.pad)) {
+                    if (ev.gsensor.sensor == SDL_SENSOR_ACCEL) {
+                        std::memcpy(hid.accel, ev.gsensor.data, sizeof hid.accel);
+                    } else if (ev.gsensor.sensor == SDL_SENSOR_GYRO && ev.gsensor.sensor_timestamp != hid.last_ns &&
+                               game_has_focus()) {
+                        // Pads can repeat one IMU reading over several reports (Switch2Connect's DualSense: 1 kHz
+                        // reports, ~65 Hz IMU); a repeat has dt 0 and would zero the held rate.
+                        hid.last_ns = ev.gsensor.sensor_timestamp;
+                        const gyro::Sample s = gyro::from_sdl(ev.gsensor.sensor_timestamp, ev.gsensor.data, hid.accel);
+                        proc.process(s);
+                        g_hold.set(proc.rate(), now);
+                        ++packets;
+                        // HID rows carry the converted sample (deg/s, g, SDL axes) and no quaternion.
+                        trace("P,%.6f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,0,0,0,0\n", now, s.gyro_dps[0], s.gyro_dps[1],
+                              s.gyro_dps[2], s.accel_g[0], s.accel_g[1], s.accel_g[2]);
+                    }
+                }
+            }
+            if (rescan && !active && !hid.pad) {
+                rescan = false;
+                if (hid.open_first()) {
+                    proc.reset();
+                    log("HID %s connected: %s", hid.name(), SDL_GetGamepadName(hid.pad));
+                }
+            }
+        }
         if (now - window_start >= 2) {
             char status[160];
-            std::snprintf(status, sizeof status, "%s | %.0f motion packets/s | %.0f loops/s%s",
-                          active ? steam::type_name(type) : (input.is_open() ? "no controller" : "Steam Input unavailable"),
+            const std::string source = active    ? steam::type_name(type)
+                                       : hid.pad ? std::string(hid.name()) + " (HID)"
+                                       : input.is_open() || hid.ready ? "no controller"
+                                                                      : "Steam Input unavailable";
+            std::snprintf(status, sizeof status, "%s | %.0f motion packets/s | %.0f loops/s%s", source.c_str(),
                           packets / (now - window_start), loops / (now - window_start),
                           proc.calibrating() ? " | calibrating" : "");
             set_status(status);
@@ -237,13 +352,14 @@ void steam_loop()
         }
         ticker.wait_ms(1);
     }
+    hid.quit();
     input.close();
 }
 
 void sensor_thread()
 {
     log("sensor thread started");
-    if (g_replay_csv.empty()) steam_loop();
+    if (g_replay_csv.empty()) sensor_loop();
     else replay_loop(g_replay_csv);
     log("sensor thread stopped");
 }
