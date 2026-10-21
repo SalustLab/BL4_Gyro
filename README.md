@@ -102,7 +102,7 @@ publish the SHA-256s with the release.
   camera is away from your character.
 - **Tested game build: Steam 25372571.** A game patch can change the input scales or break oak2-mod-manager until
   bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
-- **Not tested:** vehicles, co-op (should work fine but I have no friends to test with, if someone does so please do tell me if it works properly), generic gyro controllers other than the Gullikit TT Max, the original Switch Pro Controller and the Steam Controller (2026).
+- **Not tested:** vehicles, co-op (should work fine but I have no friends to test with, if someone does please do tell me if it works properly), generic gyro controllers other than the Gullikit TT Max, the original Switch Pro Controller and the Steam Controller (2026).
 
 ## License
 
