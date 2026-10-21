@@ -632,11 +632,6 @@ def _build_menu() -> state.Menu:
         _intro_seen()
         menu.section, menu.index, menu.trail = "Main", 0, []
 
-    def reopen_help() -> str:
-        key = g.open_panel_key.key
-        return (f"This screen is shown only once. To open this panel again, hold {g.combo.value}"
-                + (f" or press {key}." if key else "."))
-
     def calibrate(_value) -> None:
         g.start_calibration()
 
@@ -655,7 +650,7 @@ def _build_menu() -> state.Menu:
             state.Row("Tip", "info", switch_hint, visible=lambda: bool(switch_hint())),
             calibrate_row,
             state.Row("Calibration", "info", g.calibration_text),
-            state.Row("Got it", "action", set=intro_done, help=reopen_help),
+            state.Row("Got it", "action", set=intro_done, help="This screen is shown only once."),
         ],
         "Main": [
             _option_row(g.gyro_enabled, "toggle", "Gyro"),
