@@ -1,4 +1,4 @@
-# Native Gyro Aim — Borderlands 4
+# Borderlands 4 Gyro (BL4 Gyro)
 
 **Native** motion aiming for Borderlands 4 on PC. The real rotation of your controller's gyro is added to the game's
 own camera, through the same path as look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick
@@ -21,29 +21,26 @@ Diagnostics page shows which source is in use.
 ## Requirements
 
 - Borderlands 4 (Steam).
-- [oak2-mod-manager](https://github.com/bl-sdk/oak2-mod-manager/releases) **v0.3** in the game folder. The installer
-  offers to download it for you (official release, checked by SHA-256).
+- [oak2-mod-manager](https://github.com/bl-sdk/oak2-mod-manager/releases) installed in the game folder (tested with
+  **v0.3**): download `oak2-sdk.zip` from its release and extract it into the Borderlands 4 folder.
 - A controller with a gyro (see [Controllers](#controllers)).
 - Generic gyro controller (TT Max): **Switch mode** (double-click Mode) and, in Steam > Settings > Controller,
   **Nintendo Switch** support on.
 - DualSense: works with Steam's PlayStation support off for the game (BL4 gets the native pad) or on.
-- Switch 2 Pro Controller: Switch2Connect in **PS5/DualSense** mode, with the app's own gyro (mouse/stick) off.
+- Switch 2 Pro Controller: Switch2Connect in **PS5/DualSense** mode, with the app's own gyro (mouse/stick) off. The
+  pad then shows up as a DualSense, so set *Button names* to *Nintendo* (Quickstart or Advanced).
 - Don't set up gyro-as-mouse in Steam or another app: the rotation would be doubled.
 
 ## Install
 
-1. Close the game. Download `NativeGyro-<version>.zip` from Releases and extract it.
-2. Double-click **`Install.cmd`**. The installer window finds the game through Steam (or use **Browse...**), checks
-   the folder, the mod manager and whether the game is running, then **Install / Update**. No administrator rights
-   are needed unless the game is in a protected folder.
+1. Close the game. Download `bl4-gyro_<version>.zip` from Releases.
+2. Extract it into the Borderlands 4 folder (the one with `Borderlands4.exe` and `OakGame`; in Steam: right-click
+   the game > Manage > Browse local files). You get `sdk_mods\BL4Gyro\` there.
 3. Start the game. Gyro is **on** from the first launch.
 
-Updating is the same: run the new version's `Install.cmd`. Your settings, and your choice to keep the mod or the gyro
-off, are kept.
-
-Command line alternative, from the extracted folder:
-`powershell -ExecutionPolicy Bypass -File install.ps1 [-GameDir "D:\...\Borderlands 4"] [-InstallModManager]`.
-Manual install: copy the `NativeGyro` folder into `<game folder>\sdk_mods\` (don't zip or rename it).
+Updating is the same: extract the new zip over the old one and replace the files. Your settings, and your choice to
+keep the mod or the gyro off, are kept (they live in `sdk_mods\settings\BL4Gyro.json`, which the zip doesn't
+contain).
 
 ## Using it
 
@@ -56,12 +53,15 @@ Manual install: copy the `NativeGyro` folder into `<game folder>\sdk_mods\` (don
   and are saved when you close the panel.
 - While the panel is open the game is paused and neither the controller nor the keyboard/mouse act in game;
   closing it never makes the camera jump and never replays a press.
-- The first time you play, a short welcome card shows the gyro state, the detected controller and the combo.
+- The first time you play, the **Quickstart** page opens: gyro state, the detected controller, the combo, the
+  button names the panel uses (*Auto* follows your controller) and *Calibrate now*. It stays until you pick
+  *Got it*: closing it with B brings it back on the next launch (the combo opens it too). After *Got it* the combo
+  opens the full panel.
 
 | Panel page | Settings |
 |---|---|
 | Main | Gyro on/off, activation mode (Always, ADS only, Hold button), sensitivity *Grouped* (one slider for both directions) or *Individual* (horizontal and vertical), ADS multiplier, calibrate now (with progress), controller status |
-| Advanced | Invert X/Y, gyro space (Player/Local), automatic calibration, smoothing, tightening, gyro button, panel combo, restore defaults |
+| Advanced | Invert X/Y, gyro space (Player/Local), automatic calibration, smoothing, tightening, gyro button, panel combo, button names (Auto, Xbox, PlayStation, Nintendo), restore defaults |
 | Diagnostics | Controller source (Steam Input / HID), motion packets/s, gyro offset, camera hook state and restart, game build, debug trace, copy diagnostics |
 
 - **Gyro button** (Advanced, none by default): in *Hold button* mode the gyro works only while it is held; in
@@ -75,19 +75,18 @@ Manual install: copy the `NativeGyro` folder into `<game folder>\sdk_mods\` (don
 
 ## Uninstall
 
-Run `Install.cmd` and click **Uninstall**. Your gyro settings are kept unless you tick *also delete my gyro
-settings*. *Remove oak2-mod-manager* is a separate, confirmed action, because every mod that uses it stops working.
-Game files and other mods are never touched.
-
-Command line: `uninstall.ps1 [-GameDir ...] [-RemoveSettings] [-RemoveModManager]`.
+Delete the `sdk_mods\BL4Gyro` folder in the game folder. To also drop your gyro settings, delete
+`sdk_mods\settings\BL4Gyro.json`.
 
 ## Development
 
 ```
 build.cmd                                                   (builds and runs the tests)
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1      (installs straight from the build)
-powershell -ExecutionPolicy Bypass -File scripts\package.ps1      (writes dist\NativeGyro-<version>.zip and the SHA-256s)
+powershell -ExecutionPolicy Bypass -File scripts\package.ps1      (writes dist\bl4-gyro_<version>.zip and the SHA-256s)
+powershell -c "Expand-Archive dist\bl4-gyro_<version>.zip '<game folder>' -Force"   (installs it, like a player)
 ```
+
+The Phase B probe (`sdk_mods\NativeGyroProbe`) is never shipped; delete it by hand from a dev install.
 
 Before publishing a release: `build.cmd` with no failures, build the zip, send `bl4gyro.dll` to VirusTotal and
 publish the SHA-256s with the release.
@@ -115,6 +114,6 @@ Open source under the MIT license (`LICENSE`).
 - GamepadMotionHelpers v10 (MIT, vendored in `third_party/`).
 - SDL3 3.4.16 (zlib), fetched at build time; `SDL3.dll` ships in the package for the direct HID reading and is used
   by the diagnostics tool.
-- oak2-mod-manager / unrealsdk / pyunrealsdk (LGPL-3.0): not redistributed. The installer can download the official
-  release on the user's request.
+- oak2-mod-manager / unrealsdk / pyunrealsdk (LGPL-3.0): not redistributed; players install the official
+  release themselves.
 - Design references: Returnal-Native-Gyro, GyroUE/GyroLib, NeonGyro (MIT) and GyroWiki. No code copied.

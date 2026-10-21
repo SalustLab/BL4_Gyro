@@ -1,7 +1,7 @@
 // bl4gyro.dll - runs inside Borderlands 4. A sensor thread reads the controller's motion through the game's
 // own Steam Input (Steam only delivers it while the game window has focus) or, when Steam Input hands the game
 // no controller, straight from the pad's HID through SDL; it turns it into calibrated controller
-// rotation (gyro::Processor) and accumulates it. The NativeGyro sdkmod drains it once per camera update through
+// rotation (gyro::Processor) and accumulates it. The BL4Gyro sdkmod drains it once per camera update through
 // this C ABI (ctypes) and feeds it to AddYawInput/AddPitchInput on the game thread.
 #include <windows.h>
 #include <xinput.h>

@@ -21,7 +21,7 @@ from unrealsdk.hooks import Block, Type, add_hook, remove_hook
 from . import state
 
 FRAME_HOOK = "/Script/Engine.CameraModifier:BlueprintModifyCamera"
-HOOK_ID = "native_gyro_panel"  # separate from the camera hook: the panel keeps working if injection stops itself
+HOOK_ID = "bl4_gyro_panel"  # separate from the camera hook: the panel keeps working if injection stops itself
 TITLE = "BORDERLANDS 4 GYRO"
 # bl4gyro_buttons bit per button (positional names, Xbox layout).
 PAD_BITS = {"A": 0, "B": 1, "X": 2, "Y": 3, "View": 4, "Menu": 5, "L3": 6, "R3": 7, "LB": 8, "RB": 9,
@@ -59,19 +59,10 @@ KEY_SWALLOW = (
     "MouseScrollUp", "MouseScrollDown")
 REPEATS = ("up", "down", "left", "right", "fine_left", "fine_right")
 MOUSE_AXES = ("MouseX", "MouseY")  # only to notice the mouse (button hints switch to keyboard); never blocked
-# Names of the buttons the panel uses, by controller family: (bottom face, right face, left shoulder, right shoulder).
-# Positions are what the DLL reads (Xbox layout), so a Switch pad's bottom button is its B.
-PAD_LABELS = {"xbox": ("A", "B", "LB", "RB"), "playstation": ("X", "O", "L1", "R1"), "switch": ("B", "A", "L", "R")}
-
-
-def _pad_family(controller: str) -> str:
-    """From the source's controller type (Steam Input: PS5, SwitchProController...; SDL: ps5, switchpro...)."""
-    name = controller.lower()
-    if name.startswith("ps"):
-        return "playstation"
-    if "switch" in name or "joycon" in name:
-        return "switch"
-    return "xbox"
+def _pad_labels() -> tuple[str, ...]:
+    """(confirm, back, left shoulder, right shoulder) names, per the Button names option (state.pad_labels)."""
+    g = _g()
+    return state.pad_labels(g.button_labels.value, g.button_names(), g.status().split(" | ")[0])
 
 
 def _hints(device: str) -> tuple[str, str, dict]:
@@ -80,17 +71,17 @@ def _hints(device: str) -> tuple[str, str, dict]:
         return "Enter", "Esc", {"slider": "Left/Right adjust   type a number + Enter",
                                 "toggle": "Enter or Left/Right change", "choice": "Left/Right change",
                                 "action": "Enter run", "section": "Enter open"}
-    # The DLL knows the real names (Steam's mapping or SDL's labels); the family is the fallback.
-    ok, back, left, right = _g().button_names() or PAD_LABELS[_pad_family(_g().status().split(" | ")[0])]
+    ok, back, left, right = _pad_labels()
     return ok, back, {"slider": f"Left/Right adjust   {left}/{right} fine", "toggle": f"{ok} or Left/Right change",
                       "choice": "Left/Right change", "action": f"{ok} run", "section": f"{ok} open"}
-ROWS_SHOWN = 11  # the longest page (Main with individual sensitivities)
+ROWS_SHOWN = 11  # the longest pages (Main with individual sensitivities, Advanced)
 TOAST_S = 5.0
 # Slate units; the game scales them with the resolution (0.5 at 1080p), so the panel keeps its share of the screen.
 FONT_TITLE, FONT_ROW, FONT_HELP, FONT_FOOTER = 46, 38, 30, 28
-PANEL_W = 1560  # fixed width; the height fits the page (the help area always keeps 3 lines)
+PANEL_W = 1840  # fixed width; the height fits the page (the help area always keeps 3 lines)
 HELP_H = 3 * FONT_HELP * 1.45
-MARK_W, LABEL_W, VALUE_W = 50, 800, 620  # fixed columns: the game font is not monospaced
+# Fixed columns (the game font is not monospaced); VALUE_W fits "SwitchProController via Steam Input".
+MARK_W, LABEL_W, VALUE_W = 50, 800, 900
 ROW_PAD = 8  # above and below each row
 WHITE, DIM, ACCENT, BG = (0.95, 0.95, 0.95, 1), (0.62, 0.65, 0.7, 1), (1.0, 0.78, 0.2, 1), (0.03, 0.035, 0.05, 0.92)
 
@@ -98,7 +89,7 @@ _p: dict = {"started": False, "open": False, "widget": None, "title": None, "row
             "combo": state.Combo(()), "combo_handles": [], "key_handles": [], "repeat": state.Repeater(), "menu": None, "toast": None,
             "toast_until": 0.0, "last_draw": 0.0, "last_frame": 0.0, "notified": set(), "actions": [], "buttons": 0,
             "device": "pad",
-            "paused_by_us": False}
+            "paused_by_us": False, "quickstart_closed": False}
 
 
 def _g():
@@ -225,7 +216,7 @@ def _cosmetic(fn) -> None:
     except Exception as e:  # noqa: BLE001
         if not _p.get("cosmetic_error"):
             _p["cosmetic_error"] = True
-            logging.warning(f"[NativeGyro] panel layout: {type(e).__name__}: {e}")
+            logging.warning(f"[BL4Gyro] panel layout: {type(e).__name__}: {e}")
 
 
 def _margin(top: float = 0, bottom: float = 0) -> object:
@@ -347,7 +338,7 @@ def _draw() -> None:
     elif menu.message:
         help_text = menu.message
     else:
-        help_text = focus.help
+        help_text = focus.help() if callable(focus.help) else focus.help
     _set(_p["help"], help_text)
     _set(_p["footer"], f"{footers.get(focus.kind, '')}      {back} {'back' if menu.trail else 'close'}")
     _p["last_draw"] = time.perf_counter()
@@ -408,7 +399,7 @@ def _open_now(section: str | None = None) -> None:
         footer = _text(tree, box, FONT_FOOTER, DIM, gap=10)
         _show(widget, pc, (0.5, 0.5))
     except Exception as e:  # noqa: BLE001
-        logging.error(f"[NativeGyro] could not open the panel: {type(e).__name__}: {e}")
+        logging.error(f"[BL4Gyro] could not open the panel: {type(e).__name__}: {e}")
         return
     _p.update(open=True, widget=widget, title=title, rows=rows, rows_shown=[True] * len(rows), help=help_block,
               footer=footer, actions=[], pc=pc)
@@ -429,7 +420,7 @@ def _open_now(section: str | None = None) -> None:
     if not _p["paused_by_us"]:  # e.g. online co-op: at least keep the character still
         pc.SetIgnoreMoveInput(True)
         pc.SetIgnoreLookInput(True)
-    logging.info(f"[NativeGyro] panel open (game paused by the panel: {_p['paused_by_us']})")
+    logging.info(f"[BL4Gyro] panel open (game paused by the panel: {_p['paused_by_us']})")
     _g().panel_changed()
     _draw()
 
@@ -463,9 +454,8 @@ def _close_now() -> None:
     menu = _p["menu"]
     if menu is not None:
         menu.entry, menu.asking, menu.message = None, None, ""
-        if menu.section == "Welcome":  # dismissed with B: shown only once either way
-            _intro_seen()
-            menu.section, menu.index, menu.trail = "Main", 0, []
+        if menu.section == "Quickstart":  # closed without Got it: the combo reopens it, auto-opens next launch
+            _p["quickstart_closed"] = True
     _g().panel_changed()
     _g().save_now()
 
@@ -487,8 +477,8 @@ def toast(message: str) -> None:
         _show(widget, pc, (0.5, 0.08))
         _p.update(toast=widget, toast_until=time.perf_counter() + TOAST_S)
     except Exception as e:  # noqa: BLE001
-        logging.error(f"[NativeGyro] toast failed: {type(e).__name__}: {e}")
-    logging.info(f"[NativeGyro] {message}")
+        logging.error(f"[BL4Gyro] toast failed: {type(e).__name__}: {e}")
+    logging.info(f"[BL4Gyro] {message}")
 
 
 def _notify_once(key: str, active: bool, message: str) -> None:
@@ -509,8 +499,9 @@ def _watch(now: float) -> None:
     _notify_once("no_data", g._state["gate_open"] and g.gyro_enabled.value and info["source"] in (1, 2)
                  and info["since_packet"] > 3, "the controller sends no motion data. Is the game window focused?")
     _notify_once("stopped", g._state["stopped"], "gyro stopped after repeated errors. Open the panel > Diagnostics.")
-    if not g.ui.value.get("intro_seen") and g._state["gate_open"] and not _p["open"] and "request" not in _p:
-        open("Welcome")
+    if (not g.ui.value.get("intro_seen") and not _p["quickstart_closed"] and g._state["gate_open"] and not _p["open"]
+            and "request" not in _p):
+        open("Quickstart")
 
 
 def _on_frame(_obj, _args, _ret, _func) -> None:
@@ -532,7 +523,7 @@ def _on_frame(_obj, _args, _ret, _func) -> None:
                 try:
                     _act(action)  # draws after each action
                 except Exception as e:  # noqa: BLE001 - one bad action must not freeze the panel
-                    logging.error(f"[NativeGyro] panel: {type(e).__name__}: {e}")
+                    logging.error(f"[BL4Gyro] panel: {type(e).__name__}: {e}")
             _apply_request()  # B / Menu close in the same update
             if _p["open"] and now - _p["last_draw"] > 0.25:  # live values: status, calibration progress
                 _draw()
@@ -543,7 +534,7 @@ def _on_frame(_obj, _args, _ret, _func) -> None:
     except Exception as e:  # noqa: BLE001
         if not _p.get("frame_error"):
             _p["frame_error"] = True
-            logging.error(f"[NativeGyro] panel update failed: {type(e).__name__}: {e}")
+            logging.error(f"[BL4Gyro] panel update failed: {type(e).__name__}: {e}")
 
 
 def start(combo_name: str) -> None:
@@ -604,7 +595,7 @@ def _copy_diagnostics(_value) -> None:
         finally:
             user32.CloseClipboard()
     _p["menu"].message = "Copied to the clipboard." if ok else "Could not open the clipboard."
-    logging.info(f"[NativeGyro] diagnostics:\n{text}")
+    logging.info(f"[BL4Gyro] diagnostics:\n{text}")
 
 
 def _build_text() -> str:
@@ -619,7 +610,7 @@ def _controller_text() -> str:
     source = g.SOURCES[info["source"]] if 0 <= info["source"] < len(g.SOURCES) else "?"
     name = g.status().split(" | ")[0]
     if info["source"] in (1, 2):
-        return f"{name} via {source}" + ("" if info["since_packet"] >= 0 else " (no motion yet)")
+        return f"{name} via {source}" if info["since_packet"] >= 0 else f"{name} (no motion yet)"  # fits VALUE_W
     return source
 
 
@@ -641,6 +632,11 @@ def _build_menu() -> state.Menu:
         _intro_seen()
         menu.section, menu.index, menu.trail = "Main", 0, []
 
+    def reopen_help() -> str:
+        key = g.open_panel_key.key
+        return (f"This screen is shown only once. To open this panel again, hold {g.combo.value}"
+                + (f" or press {key}." if key else "."))
+
     def calibrate(_value) -> None:
         g.start_calibration()
 
@@ -649,15 +645,17 @@ def _build_menu() -> state.Menu:
                 if "Switch" in g.status() or g.info()["source"] == 0 else "")
 
     calibrate_row = state.Row("Calibrate now", "action", set=calibrate, help=CALIBRATE_HELP)
+    names_row = _option_row(g.button_labels, "choice")
     menu = state.Menu({
-        "Welcome": [
+        "Quickstart": [
             state.Row("Gyro", "info", lambda: "on" if g.gyro_enabled.value else "off"),
             status_row,
+            names_row,
             state.Row("Open this panel", "info", lambda: f"hold {g.combo.value} or press F8"),
             state.Row("Tip", "info", switch_hint, visible=lambda: bool(switch_hint())),
             calibrate_row,
             state.Row("Calibration", "info", g.calibration_text),
-            state.Row("Got it", "action", set=intro_done, help="This screen is shown only once."),
+            state.Row("Got it", "action", set=intro_done, help=reopen_help),
         ],
         "Main": [
             _option_row(g.gyro_enabled, "toggle", "Gyro"),
@@ -686,6 +684,7 @@ def _build_menu() -> state.Menu:
             _option_row(g.tighten, "slider", fine=0.1, fmt="{:.1f}"),
             _option_row(g.gyro_button, "choice"),
             _option_row(g.combo, "choice"),
+            names_row,
             state.Row("Panel key (keyboard)", "info", lambda: g.open_panel_key.key or "none"),
             state.Row("Restore defaults", "action", set=lambda _v: g.restore_defaults(),
                       confirm="Restore every gyro setting to its default?",

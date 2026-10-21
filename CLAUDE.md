@@ -2,10 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Native gyro aim for Borderlands 4 (PC, Steam). The controller's real gyro is added to the game camera through the
-game's own look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick emulation. Tested controllers: GuliKit TT Max in
+Borderlands 4 Gyro (BL4 Gyro): gyro aim for Borderlands 4 (PC, Steam). The controller's real gyro is added to the
+game camera through the game's own look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick emulation. Tested controllers: GuliKit TT Max in
 Switch mode ("generic gyro controller" mode, via Steam Input), DualSense (HID or Steam Input) and Switch 2 Pro via
 Switch2Connect (HID). The tested game build is Steam `25372571` (`TESTED_BUILD` in the mod).
+
+**Current work:** the manual in-game checklist in `evidence/PHASE-D.md` is complete (2026-10-21). For new manual
+checks, add a "pending" row, give the tester the steps, record the reported ✓/✗ in the row.
+
+The project is **Borderlands 4 Gyro** (**BL4 Gyro** for short): mod folder and module `BL4Gyro`, settings
+`BL4Gyro.json`, log prefix `[BL4Gyro]`, release `bl4-gyro_<version>.zip`. Never use the old name "NativeGyro" / "Native
+Gyro" for anything new; it survives only in past evidence and the dev probe folder `NativeGyroProbe`.
 
 Everything is in **English**: code, comments, identifiers, user-facing docs (`README.md`, `docs/`, `CONTEXT.md`,
 `evidence/*.md`), in-game text and commit messages. Tester quotes in `evidence/` stay verbatim with a translation.
@@ -30,28 +37,25 @@ There are four CTest tests:
 - `dll_replay` (`python -I tests\dll_replay_check.py build\release\bl4gyro.dll`) drives the DLL through ctypes with
   the replay backend. It checks that the camera total is the same at 30 and 144 fps, and `bl4gyro_info` (source,
   calibration result). It is registered only if CMake finds Python 3.
-- `mod_logic` (`python -I tests\mod_logic_check.py`) runs `mod/NativeGyro/state.py` outside the game: injection
+- `mod_logic` (`python -I tests\mod_logic_check.py`) runs `mod/BL4Gyro/state.py` outside the game: injection
   precedence, combo, key repeat, number parsing, settings recovery/migration, the panel's menu model. Also needs
   Python 3.
-- `scripts` (`tests\scripts_check.ps1`) runs package, game-folder detection, install/update (settings kept),
-  oak2 download refusals (hash mismatch, partial install) and uninstall (settings kept unless `-RemoveSettings`)
-  against a fake Steam install in a temp folder. It needs the built DLL.
+- `scripts` (`tests\scripts_check.ps1`) builds the release zip, checks its exact entries (all under
+  `sdk_mods/BL4Gyro/`, `/` separators), then extracts it over an older install in a fake game folder (files match
+  the build, every mod's settings kept). It needs the built DLL.
 
 No linter or formatter is configured. The C++ builds with `/W4 /permissive-`.
 
 Install, package and tools:
-- Players run `Install.cmd`, which opens `scripts\installer.ps1` (Windows Forms). It only collects choices and calls
-  `install.ps1` / `uninstall.ps1`, which hold all the logic.
-- `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 [-GameDir ...] [-InstallModManager]` installs or
-  updates the mod. The game must be closed. Without oak2-mod-manager it refuses, or with `-InstallModManager`
-  downloads the pinned v0.3 `oak2-sdk.zip` (URL + SHA-256 in the script; `-ModManagerZip` is the test hook), never
-  over an existing or partial install. The game folder is found through Steam (`scripts\steam-game-dir.ps1`,
-  `Find-GameDir`). `scripts\uninstall.ps1 [-RemoveSettings] [-RemoveModManager]` removes it. Neither script ever
-  touches `sdk_mods\settings\NativeGyro.json` unless `-RemoveSettings`.
-- `scripts\package.ps1` (run after `build.cmd`) writes `dist\NativeGyro-<__version__>.zip` and prints SHA-256
-  hashes. The version comes from `__version__` in `mod/NativeGyro/__init__.py`. `install.ps1`/`uninstall.ps1` work
-  both from the repo and from inside the extracted zip. A file the package needs must be added to `package.ps1` and
-  to the expected list in `tests\scripts_check.ps1`.
+- There is no installer. Players install oak2-mod-manager themselves, then extract the release zip into the
+  Borderlands 4 folder; uninstall is deleting `sdk_mods\BL4Gyro`. Dev installs do the same with
+  `Expand-Archive dist\bl4-gyro_<v>.zip "<game folder>" -Force`.
+- `scripts\package.ps1` (run after `build.cmd`) writes `dist\bl4-gyro_<__version__>.zip` and prints SHA-256
+  hashes. The version comes from `__version__` in `mod/BL4Gyro/__init__.py`. Every entry is
+  `sdk_mods/BL4Gyro/<file>` with `/` separators (built with `System.IO.Compression`, not `Compress-Archive`,
+  which writes `\` on PowerShell 5.1). The zip never contains `sdk_mods/settings`, so extracting over an install keeps
+  the settings. A file the package needs must be added to `package.ps1` and to the expected list in
+  `tests\scripts_check.ps1`.
 - `build\release\ttmax-diag.exe hid|sdl|steam [--label NAME] [--steam-dll PATH]` writes `evidence\A-NAME.*`. Its
   default `steam_api64.dll` path is hard-coded to `<Steam library>\...\Borderlands 4`. The guided run is
   `scripts\phase-a.ps1`.
@@ -69,12 +73,12 @@ The mod has two halves joined by a small C interface (`BL4GYRO_API` exports, loa
    at a time, `gyro::from_sdl`, repeated `sensor_timestamp`s dropped). A new packet goes through `gyro::from_steam`, then
    `gyro::Processor` (GamepadMotionHelpers: calibration, Player/Local space, tightening, smoothing), then
    `gyro::RateHold`.
-2. **`mod/NativeGyro/__init__.py`** is an sdkmod that runs in oak2-mod-manager's embedded Python. It hooks
+2. **`mod/BL4Gyro/__init__.py`** is an sdkmod that runs in oak2-mod-manager's embedded Python. It hooks
    `CameraModifier:BlueprintModifyCamera` on the game thread. On each camera update it reads the gate and ADS
    state, calls `bl4gyro_take`, decides with `state.should_inject` (gyro enabled, panel open, calibrating, activation
    mode, gyro button, gate), then calls `AddYawInput(yaw / 2.5)` and `AddPitchInput(pitch / -2.5)`.
    **`panel.py`** is the in-game panel: a UMG `UserWidget` built by reflection (`docs/adr/0001-...`), toasts and the
-   welcome card. Keyboard/mouse and the L3/R3 combo come from oak2's `keybinds` module (`register_keybind`,
+   Quickstart page. Keyboard/mouse and the L3/R3 combo come from oak2's `keybinds` module (`register_keybind`,
    `Block`); the other pad buttons from `bl4gyro_buttons` (that hook doesn't see them in BL4, so they can't be
    blocked: the panel opens only in gameplay, pauses the game and disables pawn + controller input). It has its own
    hook id on the same camera-update hook, so it keeps working if the camera hook removes itself. **`state.py`** holds all the
@@ -92,7 +96,7 @@ measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/
   line in `_push_settings()`, its tuple in `SLIDERS`/`BOOLS`/`SPINNERS` (recovery and restore defaults), and a row
   in `panel._build_menu()`. Mod-only options (mode, gyro enabled, combo) skip the DLL steps.
 - **Option identifiers are saved keys.** mods_base stores options by identifier in
-  `sdk_mods/settings/NativeGyro.json`. Never rename an identifier (change `display_name` instead); a renamed or new
+  `sdk_mods/settings/BL4Gyro.json`. Never rename an identifier (change `display_name` instead); a renamed or new
   meaning needs a migration like `state.link_vertical_default`. First run = no `enabled` key (`state.first_run`).
 - **`bl4gyro_info`** returns numbers by position (source, packets/s, seconds since the last packet, calibration
   progress, calibration result, gyro offset x/y/z); the mod's `info()` names them. Keep the order documented in
@@ -138,7 +142,7 @@ measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/
   `R` (ControlRotation per frame, written by the mod through `bl4gyro_trace_line`) and `L` (loop rate). The DLL
   also logs to `bl4gyro.log` in the mod folder.
 - `tools/probe/` is the Phase B in-game probe, for development only. It binds keys that move the camera, so it is
-  never shipped, and `install.ps1` deletes `sdk_mods\NativeGyroProbe`. Press Insert in game to hot-reload
+  never shipped; delete `sdk_mods\NativeGyroProbe` from a dev install by hand. Press Insert in game to hot-reload
   `impl.py`.
 - The mod imports `unrealsdk`/`mods_base`, which exist only inside the game, so its Python can't run outside BL4.
   Test the DLL's behavior through `dll_replay` instead.

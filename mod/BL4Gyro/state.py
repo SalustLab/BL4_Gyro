@@ -10,6 +10,10 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 MODES = ("Always", "ADS only", "Hold button")
+BUTTON_NAMES = ("Auto", "Xbox", "PlayStation", "Nintendo")
+# Names of the buttons the panel uses, by controller family: (bottom face, right face, left shoulder, right shoulder).
+# Positions are what the DLL reads (Xbox layout), so a Switch pad's bottom button is its B.
+PAD_LABELS = {"Xbox": ("A", "B", "LB", "RB"), "PlayStation": ("X", "O", "L1", "R1"), "Nintendo": ("B", "A", "L", "R")}
 COMBO_HOLD_S = 0.5
 REPEAT_DELAY_S, REPEAT_EVERY_S = 0.4, 0.08
 
@@ -25,6 +29,24 @@ def should_inject(*, gyro_enabled: bool, panel_open: bool, calibrating: bool, mo
     if button_held:
         return False
     return ads if mode == "ADS only" else True
+
+
+def pad_family(controller: str) -> str:
+    """From the source's controller type (Steam Input: PS5, SwitchProController...; SDL: ps5, switchpro...)."""
+    name = controller.lower()
+    if name.startswith("ps"):
+        return "PlayStation"
+    if "switch" in name or "joycon" in name:
+        return "Nintendo"
+    return "Xbox"
+
+
+def pad_labels(choice: str, detected: list[str] | None, controller: str) -> tuple[str, ...]:
+    """Hint names for the 'Button names' option: a fixed family wins (a Switch 2 pad through Switch2Connect is seen
+    as a DualSense); Auto uses the DLL's names (Steam's mapping or SDL's labels), else the controller family."""
+    if choice in PAD_LABELS:
+        return PAD_LABELS[choice]
+    return tuple(detected) if detected else PAD_LABELS[pad_family(controller)]
 
 
 class Combo:
@@ -130,7 +152,7 @@ class Row:
     kind: str  # toggle | choice | slider | action | section | info
     get: Callable[[], Any] = lambda: None
     set: Callable[[Any], None] | None = None
-    help: str = ""
+    help: str | Callable[[], str] = ""
     lo: float = 0.0
     hi: float = 1.0
     step: float = 0.1

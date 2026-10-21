@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(bl4_native_gyro LANGUAGES CXX)
+project(bl4_gyro LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,7 +32,7 @@ target_link_libraries(ttmax-diag PRIVATE gyro_core SDL3::SDL3 winmm)
 add_custom_command(TARGET ttmax-diag POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:ttmax-diag>)
 
-# The in-game half: loaded by the NativeGyro sdkmod through ctypes.
+# The in-game half: loaded by the BL4Gyro sdkmod through ctypes.
 add_library(bl4gyro SHARED core/bl4gyro.cpp)
 target_link_libraries(bl4gyro PRIVATE gyro_core SDL3::SDL3)
 add_custom_command(TARGET bl4gyro POST_BUILD

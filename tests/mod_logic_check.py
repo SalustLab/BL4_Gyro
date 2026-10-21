@@ -1,11 +1,11 @@
-"""Checks the mod's game-independent logic (mod/NativeGyro/state.py) outside the game.
+"""Checks the mod's game-independent logic (mod/BL4Gyro/state.py) outside the game.
 usage: python -I tests/mod_logic_check.py
 """
 import importlib.util
 import sys
 from pathlib import Path
 
-spec = importlib.util.spec_from_file_location("state", Path(__file__).parents[1] / "mod" / "NativeGyro" / "state.py")
+spec = importlib.util.spec_from_file_location("state", Path(__file__).parents[1] / "mod" / "BL4Gyro" / "state.py")
 state = importlib.util.module_from_spec(spec)
 sys.modules["state"] = state  # dataclasses resolve annotations through sys.modules
 spec.loader.exec_module(state)
@@ -150,7 +150,20 @@ def menu() -> None:
     check(m.focused().label == "Mode", "position is kept between openings")
 
 
-for test in (precedence, combo, repeater, numbers, settings, menu):
+def button_labels() -> None:
+    ps_names = ["X", "O", "L1", "R1"]
+    check(state.pad_labels("Nintendo", ps_names, "PS5") == ("B", "A", "L", "R"), "Nintendo wins over detected names")
+    check(state.pad_labels("Xbox", ps_names, "PS5") == ("A", "B", "LB", "RB"), "Xbox wins over detected names")
+    check(state.pad_labels("PlayStation", None, "xbox360") == ("X", "O", "L1", "R1"), "PlayStation without names")
+    check(state.pad_labels("Auto", ps_names, "xbox360") == ("X", "O", "L1", "R1"), "Auto uses the detected names")
+    check(state.pad_labels("Auto", None, "PS5") == ("X", "O", "L1", "R1"), "Auto fallback: PlayStation family")
+    check(state.pad_labels("Auto", None, "SwitchProController") == ("B", "A", "L", "R"), "Auto fallback: Switch")
+    check(state.pad_labels("Auto", None, "unknown") == ("A", "B", "LB", "RB"), "Auto fallback: Xbox")
+    check(state.sanitize("Sega", "Auto", choices=state.BUTTON_NAMES) == "Auto", "bad saved value -> Auto")
+
+
+
+for test in (precedence, combo, repeater, numbers, settings, menu, button_labels):
     test()
 print("OK" if not failures else f"{failures} FAILED")
 sys.exit(1 if failures else 0)

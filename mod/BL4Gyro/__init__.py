@@ -1,4 +1,4 @@
-"""Native Gyro Aim for Borderlands 4.
+"""Borderlands 4 Gyro (BL4 Gyro).
 
 The controller's real gyro (read by bl4gyro.dll through the game's own Steam Input) is added to BL4's camera with
 the same calls the game uses for look input (AddYawInput / AddPitchInput), once per camera update on the game
@@ -24,12 +24,12 @@ from . import panel, state
 
 __version__ = "0.2.0"
 __version_info__ = (0, 2, 0)
-__author__ = "bl4-native-gyro"
+__author__ = "bl4-gyro"
 
 HERE = Path(__file__).parent
-SETTINGS_FILE = SETTINGS_DIR / "NativeGyro.json"
+SETTINGS_FILE = SETTINGS_DIR / "BL4Gyro.json"
 FRAME_HOOK = "/Script/Engine.CameraModifier:BlueprintModifyCamera"  # game thread, every camera update, also when paused
-HOOK_ID = "native_gyro_frame"
+HOOK_ID = "bl4_gyro_frame"
 # shortcut: BL4's legacy input scales, measured on build 25372571 (AddYawInput(10) -> +25 deg, AddPitchInput(5) -> -12.5 deg);
 # re-measure with the probe if a patch changes them.
 YAW_SCALE, PITCH_SCALE = 2.5, -2.5
@@ -136,11 +136,17 @@ gyro_button = SpinnerOption("Gyro button", "None", list(panel.GYRO_BUTTONS),
                             description="Hold mode: gyro works while held. Always / ADS only: gyro pauses while held, "
                                         "so you can re-center the controller. The button keeps its game action.",
                             on_change_anytime=lambda _o, _v: _changed())
+# Not named button_names: that is the DLL wrapper below.
+button_labels = SpinnerOption("Button names", "Auto", list(state.BUTTON_NAMES),
+                              description="Names used in the panel's button hints. Auto follows your controller; pick "
+                                          "one if they look wrong (a Switch 2 pad through Switch2Connect shows up as a "
+                                          "DualSense).",
+                              on_change_anytime=lambda _o, _v: _changed())
 ui = HiddenOption("ui", {"intro_seen": False})
 
 SLIDERS = (sens_x, sens_y, ads_multiplier, tighten, smoothing)
 BOOLS = (gyro_enabled, link_vertical, invert_x, invert_y, auto_calibrate, debug_trace)
-SPINNERS = (mode, space, combo, gyro_button)
+SPINNERS = (mode, space, combo, gyro_button, button_labels)
 
 
 @keybind("Open gyro panel", "F8", description="Keyboard alternative to the controller combo.")
@@ -222,7 +228,7 @@ def diagnostics() -> str:
     """Shared by the panel's Diagnostics page and Copy diagnostics. No personal data (paths are relative)."""
     i = info()
     return "\n".join([
-        f"Native Gyro {__version__}  game build {_installed_build()} (tested {TESTED_BUILD})",
+        f"Borderlands 4 Gyro {__version__}  game build {_installed_build()} (tested {TESTED_BUILD})",
         f"source: {SOURCES[i['source']] if 0 <= i['source'] < len(SOURCES) else i['source']}  status: {status()}",
         f"packets/s {i['packets']:.0f}  last packet {i['since_packet']:.1f}s ago  calibration: {calibration_text()}  "
         "offset {:+.3f} {:+.3f} {:+.3f}".format(*i["offset"]),
@@ -283,7 +289,7 @@ def _load_dll() -> ctypes.CDLL:
 
 
 def _installed_build() -> str:
-    # <library>/steamapps/common/Borderlands 4/sdk_mods/NativeGyro -> <library>/steamapps/appmanifest_1285190.acf
+    # <library>/steamapps/common/Borderlands 4/sdk_mods/BL4Gyro -> <library>/steamapps/appmanifest_1285190.acf
     manifest = HERE.parents[3] / "appmanifest_1285190.acf"
     try:
         match = re.search(r'"buildid"\s+"(\d+)"', manifest.read_text(errors="replace"))
@@ -344,11 +350,11 @@ def _on_camera_update(_obj, _args, _ret, _func) -> None:
     except Exception as e:  # noqa: BLE001 - never let a per-frame error escape into the game
         _state["errors"] += 1
         if _state["errors"] <= 3:
-            logging.error(f"[NativeGyro] camera update failed: {type(e).__name__}: {e}")
+            logging.error(f"[BL4Gyro] camera update failed: {type(e).__name__}: {e}")
         if _state["errors"] == MAX_ERRORS:
             remove_hook(FRAME_HOOK, Type.PRE, HOOK_ID)
             _state["stopped"] = True
-            logging.error("[NativeGyro] disabled camera injection after repeated errors (game update?)")
+            logging.error("[BL4Gyro] disabled camera injection after repeated errors (game update?)")
 
 
 def restart_injection() -> None:
@@ -403,9 +409,9 @@ def on_enable() -> None:
     panel.start(combo.value)
     build = _installed_build()
     if build != TESTED_BUILD:
-        logging.warning(f"[NativeGyro] game build {build} differs from the tested build {TESTED_BUILD}; "
+        logging.warning(f"[BL4Gyro] game build {build} differs from the tested build {TESTED_BUILD}; "
                         "if aiming misbehaves, disable the mod and report it")
-    logging.info(f"[NativeGyro] enabled (game build {build}{', REPLAY' if replay else ''})")
+    logging.info(f"[BL4Gyro] enabled (game build {build}{', REPLAY' if replay else ''})")
 
 
 def on_disable() -> None:
@@ -413,7 +419,7 @@ def on_disable() -> None:
     remove_hook(FRAME_HOOK, Type.PRE, HOOK_ID)
     if _dll is not None:
         _dll.bl4gyro_stop()
-    logging.info("[NativeGyro] disabled")
+    logging.info("[BL4Gyro] disabled")
 
 
 def _read_settings() -> dict | None:
@@ -424,7 +430,7 @@ def _read_settings() -> dict | None:
 
 
 _saved = _read_settings()  # before build_mod: it may rewrite the file
-mod = build_mod(name="Native Gyro Aim",
+mod = build_mod(name="Borderlands 4 Gyro",
                 description="Real controller gyro added to BL4's native camera. Hold L3 + R3 (or press F8) in game "
                             "to open the gyro panel.")
 _sanitize_options()
