@@ -10,7 +10,7 @@ Tested on Steam build **25372571**.
 
 | Kind | How the mod reads the gyro | Tested in game | Should work (not verified) |
 |---|---|---|---|
-| **Generic gyro controller** | Steam Input | **GuliKit TT Max (NS69)** in Switch mode, Bluetooth | Original Switch Pro Controller (same protocol and Steam type as the TT Max), Steam Controller (2026) and other gyro controllers Steam Input recognizes |
+| **Generic gyro controller** | Steam Input | **GuliKit TT Max (NS69)** in Switch mode, Bluetooth | Original Switch Pro Controller (same protocol and Steam type as the TT Max), Steam Controller (2026) and other generic gyro controllers Steam Input recognizes |
 | **DualSense** | Direct HID (Steam Input off for PlayStation) or Steam Input | DualSense over Bluetooth and USB, both paths; rumble and adaptive triggers keep working | — |
 | **Switch 2 Pro Controller** | Direct HID, through [Switch2Connect](https://github.com/TommyWabg/Switch2Connect) in DualSense mode | Switch 2 Pro Controller | — |
 
@@ -24,7 +24,7 @@ Diagnostics page shows which source is in use.
 - [oak2-mod-manager](https://github.com/bl-sdk/oak2-mod-manager/releases) installed in the game folder (tested with
   **v0.3**): download `oak2-sdk.zip` from its release and extract it into the Borderlands 4 folder.
 - A controller with a gyro (see [Controllers](#controllers)).
-- Generic gyro controller (TT Max): **Switch mode** (double-click Mode) and, in Steam > Settings > Controller,
+- Generic gyro controller (e.g. TT Max): **Switch mode** (double-click Mode) and, in Steam > Settings > Controller,
   **Nintendo Switch** support on.
 - DualSense: works with Steam's PlayStation support off for the game (BL4 gets the native pad) or on.
 - Switch 2 Pro Controller: Switch2Connect in **PS5/DualSense** mode, with the app's own gyro (mouse/stick) off. The
@@ -91,7 +91,7 @@ publish the SHA-256s with the release.
 
 ## Limitations
 
-- **Generic gyro controllers (TT Max):** gyro only in Switch mode (PC/XInput mode sends no motion data to the PC),
+- **Generic gyro controllers:** gyro only in Switch mode (PC/XInput mode sends no motion data to the PC),
   triggers are digital in that mode, and Steam Input must stay on with "Nintendo Switch" support enabled.
 - **Motion only while the game window has focus.** In game Steam delivers about 48 readings/s with short gaps; the
   mod holds the last speed for up to 0.1 s to cover them.
@@ -102,10 +102,7 @@ publish the SHA-256s with the release.
   camera is away from your character.
 - **Tested game build: Steam 25372571.** A game patch can change the input scales or break oak2-mod-manager until
   bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
-- **Not tested:** vehicles, cutscenes, co-op, Epic Store, the original Switch Pro Controller and the Steam
-  Controller (2026), sessions longer than 1.5 h.
-- **Online co-op:** play offline or in a solo session; a mod that touches aiming in a public match may be seen as an
-  advantage.
+- **Not tested:** vehicles, co-op (should work fine but I have no friends to test with, if someone does so please do tell me if it works properly), generic gyro controllers other than the Gullikit TT Max, the original Switch Pro Controller and the Steam Controller (2026).
 
 ## License
 
