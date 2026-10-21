@@ -1,10 +1,10 @@
 """In-game gyro panel: a UMG widget built by reflection (drawn by the game's own UI renderer).
 
-Input, as measured in game (evidence/PHASE-D.md): BL4 reads the controller through a path the keybinds hook and
+Input, as measured in game: BL4 reads the controller through a path the keybinds hook and
 IsInputKeyDown never see, so controller buttons come from bl4gyro.dll (bl4gyro_buttons) and cannot be blocked.
 The panel therefore opens only during gameplay and pauses the game, which stops every device from acting on the
 character. Keyboard and mouse do go through the keybinds hook: their gameplay keys are blocked while the panel is
-open (a mouse click made while paused is otherwise replayed on unpause). See docs/adr/0001-panel-rendered-with-umg.md.
+open (a mouse click made while paused is otherwise replayed on unpause).
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ KEY_NAV = {
     **{f"NumPad{name}": str(i) for i, name in enumerate(("Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
                                                         "Eight", "Nine"))},
 }
-# Every keyboard/mouse key BL4 maps (evidence/B-mappings.txt) is blocked while the panel is open, so neither
+# Every keyboard/mouse key BL4 maps (from its input mappings) is blocked while the panel is open, so neither
 # gameplay nor the game's menus react. Not the console key (F6, handled before this hook) nor the panel's own key.
 KEY_SWALLOW = (
     *"ABCDEFGHIJKLMNOPQRSTUVWXYZ", "F1", "F2", "F3", "F4", "F5", "F7", "F8", "F9", "F10", "F11", "F12",

@@ -20,7 +20,7 @@ Sample from_sdl(std::uint64_t sensor_ns, const float gyro_rad[3], const float ac
 
 // Steam Input InputMotionData_t: rotVel{X pitch, Y roll, Z yaw} and posAccel{X right, Y forward, Z up},
 // both int16-scaled (+-2000 dps, +-2 g). Steam has no sensor clock, so the caller passes host time.
-// Axis signs were checked against SDL on the same controller (evidence/A-switch-steam-api.*).
+// Axis signs were checked against SDL on the same controller (measured on the real controller).
 Sample from_steam(double host_s, const float rot_vel[3], const float pos_accel[3]);
 
 enum class Space { Local, Player };

@@ -2,22 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Borderlands 4 Gyro (BL4 Gyro): gyro aim for Borderlands 4 (PC, Steam). The controller's real gyro is added to the
-game camera through the game's own look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick emulation. Tested controllers: GuliKit TT Max in
-Switch mode ("generic gyro controller" mode, via Steam Input), DualSense (HID or Steam Input) and Switch 2 Pro via
-Switch2Connect (HID). The tested game build is Steam `25372571` (`TESTED_BUILD` in the mod).
+Borderlands 4 Gyro (**BL4 Gyro**): gyro aim for Borderlands 4 (PC, Steam). The controller's real gyro is added to the
+game camera through the game's own look input (`AddYawInput`/`AddPitchInput`); there is no mouse or stick emulation.
+Tested controllers: GuliKit TT Max in Switch mode (via Steam Input), DualSense (HID or Steam Input) and Switch 2 Pro
+via Switch2Connect (HID). The tested game build is Steam `25372571` (`TESTED_BUILD` in the mod).
 
-**Current work:** the manual in-game checklist in `evidence/PHASE-D.md` is complete (2026-10-21). For new manual
-checks, add a "pending" row, give the tester the steps, record the reported ✓/✗ in the row.
+Names: mod folder and module `BL4Gyro`, settings `BL4Gyro.json`, log prefix `[BL4Gyro]`, release
+`bl4-gyro_<version>.zip`. Never use the old name "NativeGyro" / "Native Gyro".
 
-The project is **Borderlands 4 Gyro** (**BL4 Gyro** for short): mod folder and module `BL4Gyro`, settings
-`BL4Gyro.json`, log prefix `[BL4Gyro]`, release `bl4-gyro_<version>.zip`. Never use the old name "NativeGyro" / "Native
-Gyro" for anything new; it survives only in past evidence and the dev probe folder `NativeGyroProbe`.
+Everything is in **English**: code, comments, identifiers, `README.md`, in-game text and commit messages. Commit
+subjects start with the project phase, e.g. `D: ...` (C = the mod, D = usability: panel, modes, release).
 
-Everything is in **English**: code, comments, identifiers, user-facing docs (`README.md`, `docs/`, `CONTEXT.md`,
-`evidence/*.md`), in-game text and commit messages. Tester quotes in `evidence/` stay verbatim with a translation.
-Commit subjects start with the project phase, e.g. `D: ...` (A = hardware diagnosis, B = in-game probe, C = the mod,
-D = usability: panel, installer, modes).
+The repo is public and minimal: keep it to what builds, tests and ships the mod. No local paths, machine details,
+captures or evidence files (`/captures/`, `trace.csv`, `replay.csv` are git-ignored).
 
 ## Commands
 
@@ -29,7 +26,7 @@ build.cmd -R core_tests   # extra args are passed to ctest
 ```
 
 From PowerShell or bash, run it as `cmd /c build.cmd`. The `release` preset is `RelWithDebInfo` and builds into
-`build\release\`: `bl4gyro.dll`, `core_tests.exe` and `ttmax-diag.exe` (with `SDL3.dll` copied next to it).
+`build\release\`: `bl4gyro.dll` (with `SDL3.dll` copied next to it) and `core_tests.exe`.
 
 There are four CTest tests:
 - `core_tests` (`tests/core_tests.cpp`) uses a homemade `CHECK` macro and has no filter. Each test is a function
@@ -38,15 +35,15 @@ There are four CTest tests:
   the replay backend. It checks that the camera total is the same at 30 and 144 fps, and `bl4gyro_info` (source,
   calibration result). It is registered only if CMake finds Python 3.
 - `mod_logic` (`python -I tests\mod_logic_check.py`) runs `mod/BL4Gyro/state.py` outside the game: injection
-  precedence, combo, key repeat, number parsing, settings recovery/migration, the panel's menu model. Also needs
-  Python 3.
+  precedence, combo, key repeat, number parsing, settings recovery/migration, button names, the panel's menu model.
+  Also needs Python 3.
 - `scripts` (`tests\scripts_check.ps1`) builds the release zip, checks its exact entries (all under
   `sdk_mods/BL4Gyro/`, `/` separators), then extracts it over an older install in a fake game folder (files match
   the build, every mod's settings kept). It needs the built DLL.
 
 No linter or formatter is configured. The C++ builds with `/W4 /permissive-`.
 
-Install, package and tools:
+Release:
 - There is no installer. Players install oak2-mod-manager themselves, then extract the release zip into the
   Borderlands 4 folder; uninstall is deleting `sdk_mods\BL4Gyro`. Dev installs do the same with
   `Expand-Archive dist\bl4-gyro_<v>.zip "<game folder>" -Force`.
@@ -56,11 +53,6 @@ Install, package and tools:
   which writes `\` on PowerShell 5.1). The zip never contains `sdk_mods/settings`, so extracting over an install keeps
   the settings. A file the package needs must be added to `package.ps1` and to the expected list in
   `tests\scripts_check.ps1`.
-- `build\release\ttmax-diag.exe hid|sdl|steam [--label NAME] [--steam-dll PATH]` writes `evidence\A-NAME.*`. Its
-  default `steam_api64.dll` path is hard-coded to `<Steam library>\...\Borderlands 4`. The guided run is
-  `scripts\phase-a.ps1`.
-- `python tools/analyze_trace.py <trace.csv>` analyzes an in-game Debug trace. `python tools/analyze_diag.py
-  evidence/A-<label>.csv` analyzes a ttmax-diag capture.
 
 ## Architecture
 
@@ -70,23 +62,22 @@ The mod has two halves joined by a small C interface (`BL4GYRO_API` exports, loa
    1 kHz that polls `ISteamInput::GetMotionData` through the game's already-loaded `steam_api64.dll`, using flat
    exports with no Steamworks SDK (`core/steam_motion.*`). When Steam Input hands the game no controller (e.g. a
    DualSense with Steam Input off), it falls back to the pad's HID through SDL3 (HIDAPI drivers only, one source
-   at a time, `gyro::from_sdl`, repeated `sensor_timestamp`s dropped). A new packet goes through `gyro::from_steam`, then
-   `gyro::Processor` (GamepadMotionHelpers: calibration, Player/Local space, tightening, smoothing), then
+   at a time, `gyro::from_sdl`, repeated `sensor_timestamp`s dropped). A new packet goes through `gyro::from_steam`,
+   then `gyro::Processor` (GamepadMotionHelpers: calibration, Player/Local space, tightening, smoothing), then
    `gyro::RateHold`.
 2. **`mod/BL4Gyro/__init__.py`** is an sdkmod that runs in oak2-mod-manager's embedded Python. It hooks
    `CameraModifier:BlueprintModifyCamera` on the game thread. On each camera update it reads the gate and ADS
    state, calls `bl4gyro_take`, decides with `state.should_inject` (gyro enabled, panel open, calibrating, activation
    mode, gyro button, gate), then calls `AddYawInput(yaw / 2.5)` and `AddPitchInput(pitch / -2.5)`.
-   **`panel.py`** is the in-game panel: a UMG `UserWidget` built by reflection (`docs/adr/0001-...`), toasts and the
-   Quickstart page. Keyboard/mouse and the L3/R3 combo come from oak2's `keybinds` module (`register_keybind`,
-   `Block`); the other pad buttons from `bl4gyro_buttons` (that hook doesn't see them in BL4, so they can't be
-   blocked: the panel opens only in gameplay, pauses the game and disables pawn + controller input). It has its own
-   hook id on the same camera-update hook, so it keeps working if the camera hook removes itself. **`state.py`** holds all the
-   logic that doesn't need the game and imports no unrealsdk.
+   **`panel.py`** is the in-game panel: a UMG `UserWidget` built by reflection (the game draws it with its own UI
+   renderer and DPI scaling), toasts and the Quickstart page. Keyboard/mouse and the L3/R3 combo come from oak2's
+   `keybinds` module (`register_keybind`, `Block`); the other pad buttons from `bl4gyro_buttons` (that hook doesn't
+   see them in BL4, so they can't be blocked: the panel opens only in gameplay, pauses the game and disables pawn +
+   controller input). It has its own hook id on the same camera-update hook, so it keeps working if the camera hook
+   removes itself. **`state.py`** holds all the logic that doesn't need the game and imports no unrealsdk.
 
-The same `gyro_core` is used by `ttmax-diag` (with SDL3 input, through `from_sdl`) and by the unit tests.
-`CONTEXT.md` defines the domain terms (gate, gyro delta, camera delta, rate hold, motion packet). The rationale and
-measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/PHASE-{A,B,C}.md`.
+Terms: the **gate** is "camera input may be injected now"; a **motion packet** is one sensor reading; **rate hold**
+is the delivery described below.
 
 ### Cross-file contracts
 
@@ -94,7 +85,7 @@ measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/
   and returns 0 for an unknown key. The mod ignores that return value, so a typo fails silently. Adding an option
   takes all of these: the struct field in `core/gyro.hpp`, a branch in `bl4gyro_set`, the option in the mod, a
   line in `_push_settings()`, its tuple in `SLIDERS`/`BOOLS`/`SPINNERS` (recovery and restore defaults), and a row
-  in `panel._build_menu()`. Mod-only options (mode, gyro enabled, combo) skip the DLL steps.
+  in `panel._build_menu()`. Mod-only options (mode, gyro enabled, combo, button names) skip the DLL steps.
 - **Option identifiers are saved keys.** mods_base stores options by identifier in
   `sdk_mods/settings/BL4Gyro.json`. Never rename an identifier (change `display_name` instead); a renamed or new
   meaning needs a migration like `state.link_vertical_default`. First run = no `enabled` key (`state.first_run`).
@@ -102,15 +93,15 @@ measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/
   progress, calibration result, gyro offset x/y/z); the mod's `info()` names them. Keep the order documented in
   `core/bl4gyro.cpp`. **`bl4gyro_buttons`** bits are listed there and in `panel.PAD_BITS`; keep both in sync.
   **`bl4gyro_button_names`** gives the printed names ("confirm|back|LB|RB" by position) from Steam's
-  `GetActionOriginFromXboxOrigin` (`steam::origin_label`, values from isteaminput.h) or SDL's button labels.
+  `GetActionOriginFromXboxOrigin` (`steam::origin_label`, values from isteaminput.h) or SDL's button labels;
+  `state.pad_labels` applies the Button names option over them.
 - **ctypes signatures are declared twice**, in the mod's `_load_dll()` and in `load()` in
   `tests/dll_replay_check.py`. Keep both in sync with the exports.
 - **Axis conventions.** `Sample` uses SDL axes (X right, Y up, Z toward the player, counter-clockwise positive).
   `Delta` uses the camera convention (yaw right +, pitch up +). The Steam-to-SDL mapping in `from_steam`, including
-  the roll sign, was measured on the real controller (`evidence/A-switch-steam-api.*`). Don't flip a sign without
-  new evidence.
-- **`YAW_SCALE = 2.5` and `PITCH_SCALE = -2.5`** are BL4's legacy input scales, measured on the tested build. If a
-  patch changes them, re-measure with `tools/probe`.
+  the roll sign, was measured on the real controller. Don't flip a sign without a new measurement.
+- **`YAW_SCALE = 2.5` and `PITCH_SCALE = -2.5`** are BL4's legacy input scales, measured on the tested build
+  (`AddYawInput(10)` turns 25°). If a patch changes them, re-measure.
 
 ### Measured invariants (don't regress)
 
@@ -118,8 +109,8 @@ measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/
   reads about 9% high. It runs **only while the gate is closed**: when it ran during aiming, a slow 24° pan came
   out as 8.5°. The test `slow_pan_is_kept_while_auto_calibration_is_suspended` covers this.
 - Delivery is `RateHold`. It holds the last angular velocity, integrates it at frame time, and keeps it for at
-  most `kHoldS = 0.1` s. In game, Steam sends only about 48 packets/s, with gaps. Per-packet deltas and the removed
-  `Pacer` were both measured and were worse (see `evidence/PHASE-C.md`).
+  most `kHoldS = 0.1` s. In game, Steam sends only about 48 packets/s, with gaps. Per-packet deltas and a frame
+  pacer were both measured and were worse.
 - The mod **drains `bl4gyro_take` on every camera update, even with the gate closed**, so motion made in menus,
   with the panel open or while suspended never jumps into the camera later.
 - Auto-calibration runs only with the **game gate closed and the panel closed**; the gyro button and the
@@ -136,20 +127,18 @@ measurements behind each design choice are in `docs/TECHNICAL.md` and `evidence/
 
 ### Dev aids
 
-- If `replay.csv` (ttmax-diag CSV format) is in the installed mod folder, the DLL replays it instead of reading the
-  controller. `dll_replay` uses the same path.
+- If `replay.csv` (columns `elapsed_s,segment,sample_t_s,gyro_pitch_dps,gyro_yaw_dps,gyro_roll_dps,accel_x_g,
+  accel_y_g,accel_z_g`) is in the installed mod folder, the DLL replays it instead of reading the controller.
+  `dll_replay` uses the same path.
 - The **Debug trace** option writes `trace.csv` next to the mod, with rows `P` (packet), `T` (drain),
   `R` (ControlRotation per frame, written by the mod through `bl4gyro_trace_line`) and `L` (loop rate). The DLL
   also logs to `bl4gyro.log` in the mod folder.
-- `tools/probe/` is the Phase B in-game probe, for development only. It binds keys that move the camera, so it is
-  never shipped; delete `sdk_mods\NativeGyroProbe` from a dev install by hand. Press Insert in game to hot-reload
-  `impl.py`.
 - The mod imports `unrealsdk`/`mods_base`, which exist only inside the game, so its Python can't run outside BL4.
   Test the DLL's behavior through `dll_replay` instead.
 
 ## Third party
 
 `third_party/GamepadMotionHelpers` (v10, MIT) is vendored. Don't edit it. SDL3 3.4.16 is fetched by CMake with a
-pinned SHA-256 and is used by `ttmax-diag` and by `bl4gyro.dll`'s HID fallback, so `SDL3.dll` (zlib) ships next to
-`bl4gyro.dll` in the package and the install. oak2-mod-manager, unrealsdk and pyunrealsdk (LGPL-3.0) are never
-redistributed, and `package.ps1` must not include them.
+pinned SHA-256 and is used by `bl4gyro.dll`'s HID fallback, so `SDL3.dll` (zlib) ships next to `bl4gyro.dll` in the
+package and the install. oak2-mod-manager, unrealsdk and pyunrealsdk (LGPL-3.0) are never redistributed, and
+`package.ps1` must not include them.

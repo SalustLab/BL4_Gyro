@@ -2,3 +2,7 @@
 /dist/
 *.user
 __pycache__/
+# Local captures and traces: they hold device paths, controller handles and motion data
+/captures/
+trace.csv
+replay.csv

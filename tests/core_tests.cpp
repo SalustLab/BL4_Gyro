@@ -173,7 +173,7 @@ static void rate_hold_is_safe_across_threads()
 }
 
 // In game Steam updates motion ~48 times/s against ~49-53 frames/s, with a 40-60 ms gap about twice a second
-// (evidence/C-trace-2-paced.csv). Frames integrate the latest angular velocity, so neither the beat nor the gaps
+// (measured with the Debug trace). Frames integrate the latest angular velocity, so neither the beat nor the gaps
 // show up as empty frames or catch-up bursts.
 static void held_rate_is_smooth_through_packet_gaps()
 {

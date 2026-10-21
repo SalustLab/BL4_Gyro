@@ -189,7 +189,7 @@ void apply_pending(gyro::Processor& proc)
     }
 }
 
-// Replays a ttmax-diag CSV in real time (for repeatable in-game tests, e.g. the same motion at 30/60/144 fps).
+// Replays a recorded motion CSV (elapsed_s,segment,sample_t_s,gyro dps x3,accel g x3) in real time (for repeatable in-game tests, e.g. the same motion at 30/60/144 fps).
 void replay_loop(const std::string& path)
 {
     std::vector<gyro::Sample> samples;
@@ -549,7 +549,7 @@ void sensor_thread()
 
 #define BL4GYRO_API extern "C" __declspec(dllexport)
 
-// Starts the sensor thread. replay_csv: optional ttmax-diag CSV to play instead of the controller.
+// Starts the sensor thread. replay_csv: optional motion CSV to play instead of the controller.
 BL4GYRO_API int bl4gyro_start(const wchar_t* log_path, const char* replay_csv)
 {
     if (g_run) return 1;

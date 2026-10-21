@@ -86,24 +86,26 @@ powershell -ExecutionPolicy Bypass -File scripts\package.ps1      (writes dist\b
 powershell -c "Expand-Archive dist\bl4-gyro_<version>.zip '<game folder>' -Force"   (installs it, like a player)
 ```
 
-The Phase B probe (`sdk_mods\NativeGyroProbe`) is never shipped; delete it by hand from a dev install.
-
 Before publishing a release: `build.cmd` with no failures, build the zip, send `bl4gyro.dll` to VirusTotal and
 publish the SHA-256s with the release.
 
-## Controller diagnostics
+## Limitations
 
-`build\release\ttmax-diag.exe hid | sdl | steam` lists the HID interfaces, reads the IMU through SDL3 or through
-Steam Input (like BL4 does) and writes evidence to `evidence\`. The guided run is `scripts\phase-a.ps1`; use
-`-BluetoothOnly` if you only have Bluetooth.
-
-## Documentation
-
-- `docs/TECHNICAL.md`: architecture, measurements and decisions.
-- `docs/LIMITATIONS.md`: hardware, Steam and game limits, and risks.
-- `docs/adr/`: decisions that are hard to reverse.
-- `evidence/`: results of phases A, B, C and D (CSV, logs and summaries).
-- `CONTEXT.md`: glossary.
+- **Generic gyro controllers (TT Max):** gyro only in Switch mode (PC/XInput mode sends no motion data to the PC),
+  triggers are digital in that mode, and Steam Input must stay on with "Nintendo Switch" support enabled.
+- **Motion only while the game window has focus.** In game Steam delivers about 48 readings/s with short gaps; the
+  mod holds the last speed for up to 0.1 s to cover them.
+- **The panel's controller buttons can't be held back from the game**, so the panel opens only during gameplay and
+  pauses the game while open. With L3 + R3, press L3 first: the first button of a combo reaches the game. The gyro
+  button also keeps its game action.
+- **Gyro is off outside on-foot gameplay** (vehicles are untested), with a cursor visible, while paused or when the
+  camera is away from your character.
+- **Tested game build: Steam 25372571.** A game patch can change the input scales or break oak2-mod-manager until
+  bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
+- **Not tested:** vehicles, cutscenes, co-op, Epic Store, the original Switch Pro Controller and the Steam
+  Controller (2026), sessions longer than 1.5 h.
+- **Online co-op:** play offline or in a solo session; a mod that touches aiming in a public match may be seen as an
+  advantage.
 
 ## License
 
@@ -112,8 +114,7 @@ Open source under the MIT license (`LICENSE`).
 ## Third party
 
 - GamepadMotionHelpers v10 (MIT, vendored in `third_party/`).
-- SDL3 3.4.16 (zlib), fetched at build time; `SDL3.dll` ships in the package for the direct HID reading and is used
-  by the diagnostics tool.
+- SDL3 3.4.16 (zlib), fetched at build time; `SDL3.dll` ships in the package for the direct HID reading.
 - oak2-mod-manager / unrealsdk / pyunrealsdk (LGPL-3.0): not redistributed; players install the official
   release themselves.
 - Design references: Returnal-Native-Gyro, GyroUE/GyroLib, NeonGyro (MIT) and GyroWiki. No code copied.

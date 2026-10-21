@@ -17,8 +17,7 @@ add_executable(core_tests tests/core_tests.cpp)
 target_link_libraries(core_tests PRIVATE gyro_core)
 add_test(NAME core_tests COMMAND core_tests)
 
-# SDL3 official VC build, pinned by hash. Used by the diagnostic tool and by bl4gyro.dll's HID fallback
-# (SDL3.dll ships next to bl4gyro.dll).
+# SDL3 official VC build, pinned by hash. Used by bl4gyro.dll's HID fallback (SDL3.dll ships next to bl4gyro.dll).
 include(FetchContent)
 FetchContent_Declare(sdl3
     URL https://github.com/libsdl-org/SDL/releases/download/release-3.4.16/SDL3-devel-3.4.16-VC.zip
@@ -26,11 +25,6 @@ FetchContent_Declare(sdl3
     SOURCE_SUBDIR none) # download only; the package ships its own CMake config
 FetchContent_MakeAvailable(sdl3)
 find_package(SDL3 REQUIRED CONFIG PATHS "${sdl3_SOURCE_DIR}/cmake" NO_DEFAULT_PATH)
-
-add_executable(ttmax-diag diag/ttmax_diag.cpp)
-target_link_libraries(ttmax-diag PRIVATE gyro_core SDL3::SDL3 winmm)
-add_custom_command(TARGET ttmax-diag POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:ttmax-diag>)
 
 # The in-game half: loaded by the BL4Gyro sdkmod through ctypes.
 add_library(bl4gyro SHARED core/bl4gyro.cpp)

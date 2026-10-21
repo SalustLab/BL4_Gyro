@@ -3,7 +3,7 @@
 The controller's real gyro (read by bl4gyro.dll through the game's own Steam Input) is added to BL4's camera with
 the same calls the game uses for look input (AddYawInput / AddPitchInput), once per camera update on the game
 thread. No mouse or stick emulation, so the right stick keeps working and the UI never switches to KBM prompts.
-Measured on Steam build 25372571: see evidence/PHASE-B.md in the project repository.
+Measured on Steam build 25372571.
 
 Everything is set from the in-game panel (default: hold L3 + R3, or F8); the console mod menu still works.
 """
@@ -31,7 +31,7 @@ SETTINGS_FILE = SETTINGS_DIR / "BL4Gyro.json"
 FRAME_HOOK = "/Script/Engine.CameraModifier:BlueprintModifyCamera"  # game thread, every camera update, also when paused
 HOOK_ID = "bl4_gyro_frame"
 # shortcut: BL4's legacy input scales, measured on build 25372571 (AddYawInput(10) -> +25 deg, AddPitchInput(5) -> -12.5 deg);
-# re-measure with the probe if a patch changes them.
+# re-measure (one AddYawInput/AddPitchInput call, read ControlRotation) if a patch changes them.
 YAW_SCALE, PITCH_SCALE = 2.5, -2.5
 ADS_STATES = (1, 2)  # EZoomState.ZoomingIn, EZoomState.Zoomed
 TESTED_BUILD = "25372571"
@@ -243,7 +243,7 @@ def diagnostics() -> str:
 def _apply_auto_calibration(enabled: bool) -> None:
     # Stillness calibration during aiming eats slow, steady motion (24 deg pan -> 8.5 deg in tests/core_tests.cpp),
     # so it only runs while the game gate is closed - and not while the panel is open: the controller is in the hand
-    # then, and slow hand drift learned as bias became a steady camera drift (evidence/PHASE-D.md).
+    # then, and slow hand drift learned as bias became a steady camera drift.
     _set("auto_calibrate", enabled and not _state["gate_open"] and not panel.is_open())
 
 

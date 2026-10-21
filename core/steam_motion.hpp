@@ -19,7 +19,7 @@ struct MotionData {
 
 using Handle = std::uint64_t;
 
-// Steam returns an all-zero packet while the app's window is not focused (measured, evidence/A-switch-steam-api).
+// Steam returns an all-zero packet while the app's window is not focused (measured).
 inline bool has_data(const MotionData& m)
 {
     return m.rot_quat[0] != 0 || m.rot_quat[1] != 0 || m.rot_quat[2] != 0 || m.rot_quat[3] != 0;
