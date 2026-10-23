@@ -1,3 +1,5 @@
+![BL4 Gyro](docs/images/banner.png)
+
 # Borderlands 4 Gyro (BL4 Gyro)
 
 **Native** motion aiming for Borderlands 4 on PC. The real rotation of your controller's gyro is added to the game's
@@ -17,7 +19,7 @@ Tested on version 1.1 Steam build **26007962**.
 | Kind | How the mod reads the gyro | Tested in game | Should work (not verified) |
 |---|---|---|---|
 | **Generic gyro controller** | Steam Input | **GuliKit TT Max (NS69)** in Switch mode, Bluetooth | Original Switch Pro Controller (same protocol and Steam type as the TT Max), Steam Controller (2026) and other generic gyro controllers Steam Input recognizes |
-| **DualSense** | Direct HID (Steam Input off for PlayStation) or Steam Input | DualSense over Bluetooth and USB, both paths; rumble and adaptive triggers keep working | — |
+| **DualSense** | Direct HID (Steam Input off for PlayStation) or Steam Input | DualSense over Bluetooth and USB, both paths; rumble and adaptive triggers keep working | DualShock 4 (same two paths; Bluetooth with Steam Input off is the least certain) |
 | **Switch 2 Pro Controller** | Direct HID, through [Switch2Connect](https://github.com/TommyWabg/Switch2Connect) in DualSense mode | Switch 2 Pro Controller | — |
 
 The mod uses Steam Input when it hands a controller to the game. When it hands none (e.g. a DualSense with Steam
@@ -63,6 +65,11 @@ contain).
   button names the panel uses (*Auto* follows your controller) and *Calibrate now*. It stays until you pick
   *Got it*: closing it with B brings it back on the next launch (the combo opens it too). After *Got it* the combo
   opens the full panel.
+
+<p align="center">
+  <img src="docs/images/panel-main.jpg" alt="Gyro panel, Main page" width="49%">
+  <img src="docs/images/panel-advanced.jpg" alt="Gyro panel, Advanced page" width="49%">
+</p>
 
 | Panel page | Settings |
 |---|---|
@@ -110,8 +117,8 @@ publish the SHA-256s with the release.
 - **Tested game build: Steam 26007962.** A game patch can change the input scales or break oak2-mod-manager until
   bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
 - **Not tested:** co-op (should work fine but I have no friends to test with, if someone does please do tell me if
-  it works properly), generic gyro controllers other than the GuliKit TT Max, the original Switch Pro Controller
-  and the Steam Controller (2026).
+  it works properly), generic gyro controllers other than the GuliKit TT Max, the original Switch Pro Controller,
+  the Steam Controller (2026) and the DualShock 4.
 
 ## License
 
