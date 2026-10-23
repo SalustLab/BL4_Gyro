@@ -3,7 +3,7 @@
 The controller's real gyro (read by bl4gyro.dll through the game's own Steam Input) is added to BL4's camera with
 the same calls the game uses for look input (AddYawInput / AddPitchInput), once per camera update on the game
 thread. No mouse or stick emulation, so the right stick keeps working and the UI never switches to KBM prompts.
-Measured on Steam build 25372571.
+Measured on Steam build 25372571, re-checked on 26007962 (game version 1.1).
 
 Everything is set from the in-game panel (default: hold L3 + R3, or F8); the console mod menu still works.
 """
@@ -23,18 +23,19 @@ from unrealsdk.hooks import Type, add_hook, remove_hook
 from . import panel, state
 
 __version__ = "1.0.0"
-__version_info__ = (0, 2, 0)
+__version_info__ = tuple(int(part) for part in __version__.split("."))
 __author__ = "bl4-gyro"
 
 HERE = Path(__file__).parent
 SETTINGS_FILE = SETTINGS_DIR / "BL4Gyro.json"
 FRAME_HOOK = "/Script/Engine.CameraModifier:BlueprintModifyCamera"  # game thread, every camera update, also when paused
 HOOK_ID = "bl4_gyro_frame"
-# shortcut: BL4's legacy input scales, measured on build 25372571 (AddYawInput(10) -> +25 deg, AddPitchInput(5) -> -12.5 deg);
+# shortcut: BL4's legacy input scales, measured on build 25372571 (AddYawInput(10) -> +25 deg, AddPitchInput(5) -> -12.5 deg)
+# and re-checked on 26007962 (Debug trace: ControlRotation turns exactly the yaw/pitch sent);
 # re-measure (one AddYawInput/AddPitchInput call, read ControlRotation) if a patch changes them.
 YAW_SCALE, PITCH_SCALE = 2.5, -2.5
 ADS_STATES = (1, 2)  # EZoomState.ZoomingIn, EZoomState.Zoomed
-TESTED_BUILD = "25372571"
+TESTED_BUILD = "26007962"
 SAME_UPDATE_S = 0.001  # the hook fires once per camera modifier; one pass per camera update is enough
 CALIBRATION_S, CALIBRATION_COUNTDOWN_S = 4.0, 5.0  # time to hold the controller still, then measuring
 SAVE_DELAY_S = 1.0
