@@ -614,8 +614,8 @@ def _controller_text() -> str:
     return source
 
 
-CALIBRATE_HELP = ("Lay the controller flat and let go. You get 5 seconds, then it measures for 4 seconds. "
-                  "Picked up or tilted = rejected, the old calibration stays.")
+CALIBRATE_HELP = ("Hold the controller still or rest it on a table (most accurate). You get 5 seconds, then it "
+                  "measures for 4 seconds. If it moves, the old calibration stays.")
 
 
 def _build_menu() -> state.Menu:

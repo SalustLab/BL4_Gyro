@@ -15,8 +15,13 @@ constexpr float kSteamGPerUnit = 2.0f / 32768.0f;
 constexpr double kMaxGapS = 0.1;       // longer gaps (stall, reconnect) are not integrated
 constexpr float kYawRelaxFactor = 1.41f; // GyroWiki default for Player Space
 constexpr double kSmoothTimeS = 0.1;     // time constant of the smoothed tier
-constexpr float kCalibrationMaxSpreadDps = 3.f; // raw spread above this while calibrating = the controller moved
-constexpr double kCalibrationMinFlat = 0.9;     // gravity within ~25 deg of the controller's up/down axis = lying flat
+// A calibration is split in quarters. The mean gyro of two quarters differing more than this = the controller moved
+// (picked up, bumped, a slow ramp). Hand tremor averages out: measured in the hands, up to 7 dps of spread but
+// quarter means within 0.33 dps (3x margin).
+constexpr double kCalibrationMaxDriftDps = 1.0;
+// Gravity turning more than this between the first and last quarter = a steady slow turn, which keeps the same mean
+// in every quarter (4 s calibration: catches pitch/roll above ~0.33 dps; yaw doesn't move gravity).
+constexpr double kCalibrationMaxTiltDeg = 1.0;
 } // namespace
 
 Sample from_sdl(std::uint64_t sensor_ns, const float gyro_rad[3], const float accel_ms2[3])
@@ -64,11 +69,7 @@ void Processor::calibrate(double seconds)
     calibration_left_s_ = calibration_total_s_ = seconds;
     calibration_ = Calibration::Running;
     motion_.GetCalibrationOffset(previous_offset_[0], previous_offset_[1], previous_offset_[2]);
-    for (int i = 0; i < 3; ++i) {
-        raw_min_[i] = INFINITY;
-        raw_max_[i] = -INFINITY;
-        accel_sum_[i] = 0;
-    }
+    for (Quarter& q : quarters_) q = {};
     motion_.SetCalibrationMode(GamepadMotionHelpers::Manual);
     motion_.ResetContinuousCalibration();
     motion_.StartContinuousCalibration();
@@ -86,20 +87,32 @@ Delta Processor::process(const Sample& s)
     motion_.ProcessMotion(s.gyro_dps[0], s.gyro_dps[1], s.gyro_dps[2], s.accel_g[0], s.accel_g[1],
                           s.accel_g[2], static_cast<float>(dt));
     if (calibrating()) {
-        bool moved = false;
+        Quarter& q = quarters_[std::clamp(static_cast<int>(4 * (1 - calibration_left_s_ / calibration_total_s_)), 0, 3)];
+        ++q.n;
         for (int i = 0; i < 3; ++i) {
-            raw_min_[i] = std::min(raw_min_[i], s.gyro_dps[i]);
-            raw_max_[i] = std::max(raw_max_[i], s.gyro_dps[i]);
-            moved |= raw_max_[i] - raw_min_[i] > kCalibrationMaxSpreadDps;
-            accel_sum_[i] += s.accel_g[i];
+            q.gyro[i] += s.gyro_dps[i];
+            q.accel[i] += s.accel_g[i];
         }
         calibration_left_s_ -= dt;
         if (!calibrating()) {
             motion_.PauseContinuousCalibration();
-            const double g = std::sqrt(accel_sum_[0] * accel_sum_[0] + accel_sum_[1] * accel_sum_[1] +
-                                       accel_sum_[2] * accel_sum_[2]);
-            const bool flat = g > 0 && std::fabs(accel_sum_[1]) / g >= kCalibrationMinFlat; // SDL Y = pad's up
-            calibration_ = moved ? Calibration::Moved : flat ? Calibration::Ok : Calibration::NotFlat;
+            bool moved = false;
+            for (int i = 0; i < 3; ++i) {
+                double lo = INFINITY, hi = -INFINITY;
+                for (const Quarter& part : quarters_) {
+                    if (part.n == 0) continue;
+                    lo = std::min(lo, part.gyro[i] / part.n);
+                    hi = std::max(hi, part.gyro[i] / part.n);
+                }
+                moved |= hi - lo > kCalibrationMaxDriftDps;
+            }
+            const double* a = quarters_[0].accel;
+            const double* b = quarters_[3].accel;
+            const double norms = std::sqrt((a[0] * a[0] + a[1] * a[1] + a[2] * a[2]) *
+                                           (b[0] * b[0] + b[1] * b[1] + b[2] * b[2]));
+            const double max_cos = std::cos(kCalibrationMaxTiltDeg * std::numbers::pi / 180.0);
+            moved |= norms > 0 && (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) / norms < max_cos;
+            calibration_ = moved ? Calibration::Moved : Calibration::Ok;
             if (calibration_ != Calibration::Ok)
                 motion_.SetCalibrationOffset(previous_offset_[0], previous_offset_[1], previous_offset_[2], 1);
             apply_calibration_mode();

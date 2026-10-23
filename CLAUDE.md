@@ -115,7 +115,10 @@ is the delivery described below.
 - The mod **drains `bl4gyro_take` on every camera update, even with the gate closed**, so motion made in menus,
   with the panel open or while suspended never jumps into the camera later.
 - Auto-calibration runs only with the **game gate closed and the panel closed**; the gyro button and the
-  activation mode never turn it on. Manual calibration only counts when the controller lies flat and still.
+  activation mode never turn it on. Manual calibration only counts when the controller is still, in any
+  orientation and with hand tremor: the gyro's mean per quarter of the measurement within 1 dps (in the hands:
+  up to 7 dps of spread, means within 0.33) and gravity turning under 1° between the first and last quarter (catches slow
+  drift in the hand, except a steady turn around the vertical axis).
 - While the panel is open, **key releases always pass to the game** (no stuck keys), and everything done on open
   (pause, `DisableInput`, or the counted `SetIgnoreMoveInput/SetIgnoreLookInput`) is undone exactly once on close.
   Panel actions run on the next camera update, never inside a keybind callback.

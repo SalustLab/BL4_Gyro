@@ -67,9 +67,9 @@ contain).
 - **Gyro button** (Advanced, none by default): in *Hold button* mode the gyro works only while it is held; in
   *Always* / *ADS only* holding it pauses the gyro so you can re-center the controller — release and it continues
   without a jump. The button keeps its own game action.
-- **Calibration:** if the camera drifts slowly with the controller still, use *Calibrate now*: lay the controller
-  flat within 5 s, it then measures for 4 s and reports *Calibrated*, or *It moved* / *Not lying flat* (the old
-  calibration is kept). Automatic calibration removes drift while a menu, the map or pause is open and the
+- **Calibration:** if the camera drifts slowly with the controller still, use *Calibrate now*: hold the controller
+  still or rest it on a table (most accurate) within 5 s, it then measures for 4 s and reports *Calibrated*, or
+  *It moved* (the old calibration is kept). Automatic calibration removes drift while a menu, the map or pause is open and the
   controller lies still (never while you aim or while the gyro panel is open).
 - All options are also in the console mod menu (`F6`, `mods`), where the keyboard key for the panel can be rebound.
 

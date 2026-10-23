@@ -136,8 +136,7 @@ void publish_calibration(gyro::Processor& proc)
     const bool moved_offset = std::fabs(offset[0] - logged[0]) + std::fabs(offset[1] - logged[1]) +
                               std::fabs(offset[2] - logged[2]) > 0.05f;
     if (result != logged_result && result != gyro::Calibration::Running) {
-        static const char* names[] = {"none", "running", "ok", "moved (previous offset kept)",
-                                      "not lying flat (previous offset kept)"};
+        static const char* names[] = {"none", "running", "ok", "moved (previous offset kept)"};
         log("manual calibration: %s", names[static_cast<int>(result)]);
     }
     if (result != gyro::Calibration::Running && (moved_offset || result != logged_result)) {
@@ -658,8 +657,8 @@ BL4GYRO_API unsigned bl4gyro_buttons() { return g_buttons; }
 
 // Panel status as numbers: [0] source (0 none, 1 Steam, 2 HID, 3 replay, 4 Steam Input unavailable),
 // [1] motion packets/s (2 s window), [2] seconds since the last packet (-1 none yet), [3] calibration progress 0..1,
-// [4] calibration (0 none, 1 running, 2 ok, 3 moved / 4 not lying flat: previous offset kept, 5 running without
-// data past its deadline), [5..7] gyro offset being subtracted (deg/s, pitch yaw roll).
+// [4] calibration (0 none, 1 running, 2 ok, 3 moved: previous offset kept, 4 unused (was "not lying flat"),
+// 5 running without data past its deadline), [5..7] gyro offset being subtracted (deg/s, pitch yaw roll).
 // Returns how many values were written.
 BL4GYRO_API int bl4gyro_info(double* out, int n)
 {

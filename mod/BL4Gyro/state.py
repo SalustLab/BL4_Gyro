@@ -112,7 +112,6 @@ def calibration_label(cal: int, progress: float, offset: tuple[float, ...], auto
     return {1: f"Measuring {progress * 100:.0f}% - don't touch it",
             2: "Calibrated",
             3: "It moved - kept the old calibration. Try again.",
-            4: "Not lying flat - kept the old calibration. Try again.",
             5: "No motion data - is the controller connected?"}.get(cal, "Not calibrated yet")
 
 

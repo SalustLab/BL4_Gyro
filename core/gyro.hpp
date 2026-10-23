@@ -38,9 +38,9 @@ struct Delta {
     double pitch_deg = 0;
 };
 
-// Outcome of the last manual calibration. Moved / NotFlat keep the previous offset: a calibration only counts when
-// the controller lies flat and still (in the hand, slow drift looks like bias and becomes camera drift).
-enum class Calibration { None, Running, Ok, Moved, NotFlat };
+// Outcome of the last manual calibration. Moved keeps the previous offset: a calibration only counts when the
+// controller is still, in any orientation (slow drift in the hand looks like bias and becomes camera drift).
+enum class Calibration { None, Running, Ok, Moved };
 
 // One per controller. Integrates each sample over its own interval (sensor time), so the
 // result does not depend on how often the game consumes it.
@@ -51,8 +51,8 @@ public:
     Delta process(const Sample& s); // rotation since the previous sample; zero across gaps
     Delta rate() const { return rate_; } // angular velocity of the last processed sample (deg/s, camera convention)
     void reset();
-    // Manual calibration: the controller must be still; output is muted while it runs. If it moved, the previous
-    // offset is kept and the result is Moved.
+    // Manual calibration: the controller must be still (steady gyro mean, gravity not turning; tremor is fine); output
+    // is muted while it runs. If it moved, the previous offset is kept and the result is Moved.
     void calibrate(double seconds);
     bool calibrating() const { return calibration_left_s_ > 0; }
     bool auto_calibrating() const { return settings_.auto_calibrate && !calibrating(); }
@@ -68,8 +68,11 @@ private:
     double calibration_left_s_ = 0, calibration_total_s_ = 0;
     Calibration calibration_ = Calibration::None;
     float previous_offset_[3] = {};
-    float raw_min_[3] = {}, raw_max_[3] = {};
-    double accel_sum_[3] = {};
+    struct Quarter { // sums over a quarter of the calibration (sensor time)
+        double gyro[3] = {}, accel[3] = {};
+        int n = 0;
+    };
+    Quarter quarters_[4];
     float smoothed_[2] = {};
     Delta rate_;
     double prev_t_ = 0;

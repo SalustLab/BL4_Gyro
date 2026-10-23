@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <atomic>
 #include <chrono>
+#include <numbers>
 #include <thread>
 #include <string>
 #include <vector>
@@ -355,8 +356,9 @@ static void calibration_reports_moved_and_keeps_previous_offset()
     CHECK(std::fabs(after.yaw_deg) < 0.1 && std::fabs(after.pitch_deg) < 0.1); // old bias still removed
 }
 
-// Held in the hand instead of lying flat: a slow, smooth 1 dps turn and a tilted controller are both rejected.
-static void calibration_rejects_slow_turn_and_not_flat()
+// Still is enough, in any orientation, and hand tremor is fine; slow drift (in the hand) is rejected: a smooth yaw ramp
+// by the gyro's quarter means changing, a steady 1 dps tilt (same means throughout) by gravity changing direction.
+static void calibration_rejects_slow_drift_in_any_orientation()
 {
     gyro::Processor p(plain_settings());
     BiasedSensor sensor;
@@ -379,13 +381,39 @@ static void calibration_rejects_slow_turn_and_not_flat()
     CHECK(near(kept[1], good[1], 1e-3));
 
     p.calibrate(2.0);
-    for (const double end = t + 2.05; t < end; t += 0.005) { // standing on its side: gravity on X
+    for (const double end = t + 2.05; t < end; t += 0.005) { // standing still on its side: gravity on X
         gyro::Sample s = sensor.at(t);
         s.accel_g[0] = 1.f;
         s.accel_g[1] = 0.f;
         p.process(s);
     }
-    CHECK(p.calibration() == gyro::Calibration::NotFlat);
+    CHECK(p.calibration() == gyro::Calibration::Ok);
+
+    p.calibrate(2.0);
+    for (const double end = t + 2.05; t < end; t += 0.005) { // held still in the hands: +-5 dps tremor, zero mean
+        gyro::Sample s = sensor.at(t);
+        const float tremor = static_cast<float>(5.0 * std::sin(2 * std::numbers::pi * 10.0 * t));
+        s.gyro_dps[0] += tremor;
+        s.gyro_dps[2] -= tremor;
+        p.process(s);
+    }
+    CHECK(p.calibration() == gyro::Calibration::Ok); // measured in game: up to 7 dps of spread, quarter means within 0.33
+    float held[3];
+    p.calibration_offset(held);
+    CHECK(near(held[0], good[0], 0.1) && near(held[2], good[2], 0.1));
+
+    p.calibrate(2.0);
+    for (const double start = t, end = t + 2.05; t < end; t += 0.005) { // tilting at a steady 1 dps
+        gyro::Sample s = sensor.at(t);
+        const double a = (t - start) * std::numbers::pi / 180.0;
+        s.gyro_dps[0] += 1.f;
+        s.accel_g[1] = static_cast<float>(std::cos(a));
+        s.accel_g[2] = static_cast<float>(std::sin(a));
+        p.process(s);
+    }
+    CHECK(p.calibration() == gyro::Calibration::Moved);
+    p.calibration_offset(kept);
+    CHECK(near(kept[0], good[0], 0.05)); // previous offset kept, not the tilted one (good[0] + 1)
 }
 
 // Steam's EInputActionOrigin -> printed names (values from isteaminput.h; append-only enum).
@@ -463,7 +491,7 @@ int main()
     slow_pan_is_kept_while_auto_calibration_is_suspended();
     calibration_reports_ok_and_progress_when_still();
     calibration_reports_moved_and_keeps_previous_offset();
-    calibration_rejects_slow_turn_and_not_flat();
+    calibration_rejects_slow_drift_in_any_orientation();
     steam_origins_name_the_physical_buttons();
     tightening_slows_tiny_motion_and_leaves_big_motion_alone();
     tiered_smoothing_keeps_big_motion_and_calms_jitter();

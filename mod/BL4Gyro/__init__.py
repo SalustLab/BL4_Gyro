@@ -36,7 +36,7 @@ YAW_SCALE, PITCH_SCALE = 2.5, -2.5
 ADS_STATES = (1, 2)  # EZoomState.ZoomingIn, EZoomState.Zoomed
 TESTED_BUILD = "25372571"
 SAME_UPDATE_S = 0.001  # the hook fires once per camera modifier; one pass per camera update is enough
-CALIBRATION_S, CALIBRATION_COUNTDOWN_S = 4.0, 5.0  # time to lay the controller flat, then measuring
+CALIBRATION_S, CALIBRATION_COUNTDOWN_S = 4.0, 5.0  # time to hold the controller still, then measuring
 SAVE_DELAY_S = 1.0
 MAX_ERRORS = 100
 SOURCES = ("No controller", "Steam Input", "HID (SDL)", "Replay", "Steam Input unavailable")
@@ -159,7 +159,7 @@ def calibrate_key() -> None:
     start_calibration()
 
 
-@ButtonOption("Calibrate now", description="Lay the controller flat within 5 seconds; it measures for 4.")
+@ButtonOption("Calibrate now", description="Hold the controller still (or rest it on a table) within 5 seconds; it measures for 4.")
 def calibrate_now(_button) -> None:
     start_calibration()
 
@@ -211,7 +211,7 @@ def calibration_text() -> str:
     """Progress tied to the real operation: countdown in Python, then the DLL's sensor-time progress."""
     start_at = _state["cal_start_at"]
     if start_at is not None:
-        return f"Lay it flat... {max(0.0, start_at - time.perf_counter()):.0f}"
+        return f"Keep it still... {max(0.0, start_at - time.perf_counter()):.0f}"
     i = info()
     return state.calibration_label(i["cal"], i["cal_progress"], i["offset"], auto_calibrate.value)
 
