@@ -10,7 +10,7 @@ emulation: the right stick keeps working alongside it and the button prompts nev
 - Automatic calibration in menus, and a manual *Calibrate now* that only needs the controller held still.
 - Steam Input or direct HID, picked automatically.
 
-Tested on Steam build **25372571**.
+Tested on version 1.1 Steam build **26007962**.
 
 ## Controllers
 
