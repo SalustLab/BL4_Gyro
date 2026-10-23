@@ -102,6 +102,20 @@ class Repeater:
         return self.key
 
 
+def calibration_label(cal: int, progress: float, offset: tuple[float, ...], auto: bool) -> str:
+    """Panel text from bl4gyro_info's calibration result and offset. Manual calibration isn't saved between sessions,
+    so a new session shows what automatic calibration has learned (any non-zero offset)."""
+    if cal == 0:
+        if any(offset):
+            return "Auto-calibrated"
+        return "Calibrating automatically - rest the controller in a menu" if auto else "Not calibrated yet"
+    return {1: f"Measuring {progress * 100:.0f}% - don't touch it",
+            2: "Calibrated",
+            3: "It moved - kept the old calibration. Try again.",
+            4: "Not lying flat - kept the old calibration. Try again.",
+            5: "No motion data - is the controller connected?"}.get(cal, "Not calibrated yet")
+
+
 def parse_number(text: str) -> float | None:
     """Accepts '2.5', '2,5', ' 3 '. Returns None for anything that is not a finite number."""
     try:

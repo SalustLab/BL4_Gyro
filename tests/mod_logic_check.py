@@ -162,8 +162,19 @@ def button_labels() -> None:
     check(state.sanitize("Sega", "Auto", choices=state.BUTTON_NAMES) == "Auto", "bad saved value -> Auto")
 
 
+def calibration_label() -> None:
+    zero, learned = (0.0, 0.0, 0.0), (0.013, 0.020, 0.017)
+    label = state.calibration_label
+    check(label(2, 1.0, learned, True) == "Calibrated", "manual calibration wins")
+    check(label(0, 0.0, learned, True) == "Auto-calibrated", "new session: automatic offset learned")
+    check(label(0, 0.0, learned, False) == "Auto-calibrated", "learned offset kept after auto is turned off")
+    check(label(0, 0.0, zero, True).startswith("Calibrating automatically"), "auto on, nothing learned yet")
+    check(label(0, 0.0, zero, False) == "Not calibrated yet", "auto off, never calibrated")
+    check(label(1, 0.5, zero, True) == "Measuring 50% - don't touch it", "manual progress")
+    check(label(3, 0.0, learned, True).startswith("It moved"), "rejected manual calibration still says so")
 
-for test in (precedence, combo, repeater, numbers, settings, menu, button_labels):
+
+for test in (precedence, combo, repeater, numbers, settings, menu, button_labels, calibration_label):
     test()
 print("OK" if not failures else f"{failures} FAILED")
 sys.exit(1 if failures else 0)

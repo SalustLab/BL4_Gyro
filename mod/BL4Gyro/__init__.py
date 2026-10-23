@@ -213,11 +213,7 @@ def calibration_text() -> str:
     if start_at is not None:
         return f"Lay it flat... {max(0.0, start_at - time.perf_counter()):.0f}"
     i = info()
-    return {1: f"Measuring {i['cal_progress'] * 100:.0f}% - don't touch it",
-            2: "Calibrated",
-            3: "It moved - kept the old calibration. Try again.",
-            4: "Not lying flat - kept the old calibration. Try again.",
-            5: "No motion data - is the controller connected?"}.get(i["cal"], "Not calibrated yet")
+    return state.calibration_label(i["cal"], i["cal_progress"], i["offset"], auto_calibrate.value)
 
 
 def calibrating() -> bool:
