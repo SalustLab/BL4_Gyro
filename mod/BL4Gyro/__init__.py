@@ -97,14 +97,14 @@ mode = SpinnerOption("Activation mode", "Always", list(state.MODES),
 sens_x = SliderOption("Horizontal sensitivity", 2.0, 0.1, 10.0, 0.1, False,
                       description="Camera degrees per degree you turn the controller left/right.",
                       on_change_anytime=lambda _o, v: _apply_sens(x=v))
-ads_multiplier = SliderOption("ADS sensitivity multiplier", 1.0, 0.1, 2.0, 0.05, False,
+ads_multiplier = SliderOption("ADS sensitivity multiplier", 0.75, 0.1, 2.0, 0.05, False,
                               description="Multiplies the sensitivity while aiming down sights. Below 1 = steadier aim.",
                               on_change_anytime=_setter("ads_multiplier"))
-link_vertical = BoolOption("Link vertical", True, display_name="Grouped sensitivity",
+link_vertical = BoolOption("Link vertical", False, display_name="Grouped sensitivity",
                            description="On: one sensitivity for both directions. Off: horizontal and vertical "
                                        "separately.",
                            on_change_anytime=lambda _o, v: _apply_sens(link=v))
-sens_y = SliderOption("Vertical sensitivity", 2.0, 0.1, 10.0, 0.1, False,
+sens_y = SliderOption("Vertical sensitivity", 1.2, 0.1, 10.0, 0.1, False,
                       description="Camera degrees per degree you tilt the controller up/down.",
                       on_change_anytime=lambda _o, v: _apply_sens(y=v))
 invert_x = BoolOption("Invert horizontal", False, on_change_anytime=_setter("invert_x", int))
@@ -382,7 +382,7 @@ def _sanitize_options() -> None:
 
 
 def restore_defaults() -> None:
-    for option in (*SLIDERS, *BOOLS, *SPINNERS):
+    for option in (*BOOLS, *SLIDERS, *SPINNERS):  # link first, or the sliders sync to one value
         if option is not debug_trace:
             option.value = option.default_value
     open_panel_key.key = open_panel_key.default_key
