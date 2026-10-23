@@ -131,3 +131,7 @@ Open source under the MIT license (`LICENSE`).
 - oak2-mod-manager / unrealsdk / pyunrealsdk (LGPL-3.0): not redistributed; players install the official
   release themselves.
 - Design references: Returnal-Native-Gyro, GyroUE/GyroLib, NeonGyro (MIT) and GyroWiki. No code copied.
+
+## Support
+
+If BL4 Gyro made the game better for you, you can buy me a coffee on [Ko-fi](https://ko-fi.com/SalustLab). Thanks!
