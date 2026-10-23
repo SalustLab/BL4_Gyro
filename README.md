@@ -1,18 +1,39 @@
-![BL4 Gyro](docs/images/banner.png)
+<p align="center">
+  <img src="docs/images/banner.png" alt="BL4 Gyro: native gyro aiming for Borderlands 4 on PC">
+</p>
 
-# Borderlands 4 Gyro (BL4 Gyro)
+<h1 align="center">Borderlands 4 Gyro (BL4 Gyro)</h1>
+
+<p align="center">
+  <a href="https://github.com/SalustLab/BL4_Gyro/releases/latest"><img src="https://img.shields.io/github/v/release/SalustLab/BL4_Gyro?label=release&color=f2cc5c" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/SalustLab/BL4_Gyro?color=blue" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Steam-0078d4" alt="Platform: Windows, Steam">
+  <img src="https://img.shields.io/badge/tested%20on-BL4%201.1%20(build%2026007962)-success" alt="Tested on Borderlands 4 1.1, build 26007962">
+  <a href="https://ko-fi.com/SalustLab"><img src="https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white" alt="Support on Ko-fi"></a>
+</p>
+
+<p align="center">
+  <b><a href="https://github.com/SalustLab/BL4_Gyro/releases/latest">Download</a></b> ·
+  <a href="#install">Install</a> ·
+  <a href="#using-it">Using it</a> ·
+  <a href="#controllers">Controllers</a> ·
+  <a href="#limitations">Limitations</a> ·
+  <a href="#support">Support</a>
+</p>
 
 **Native** motion aiming for Borderlands 4 on PC. The real rotation of your controller's gyro is added to the game's
 own camera, through the same path as look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick
 emulation: the right stick keeps working alongside it and the button prompts never switch to keyboard/mouse.
 
-- Works on foot and in vehicles (as the driver the gyro aims the turret; steering stays on the stick).
-- In-game panel on the controller (L3 + R3) or keyboard (F8): sensitivity, ADS multiplier, activation mode
-  (Always, ADS only, Hold button), gyro button, smoothing, tightening, Player/Local space.
-- Automatic calibration in menus, and a manual *Calibrate now* that only needs the controller held still.
-- Steam Input or direct HID, picked automatically.
+## Features
 
-Tested on version 1.1 Steam build **26007962**.
+- **On foot and in vehicles:** as the driver the gyro aims the turret; steering stays on the stick.
+- **In-game panel** on the controller (L3 + R3) or keyboard (F8): sensitivity, ADS multiplier, activation mode
+  (Always, ADS only, Hold button), gyro button, smoothing, tightening, Player/Local space.
+- **Quickstart** on the first launch to check the controller, the combo and the calibration before playing.
+- **Calibration that stays out of the way:** automatic in menus, and a manual *Calibrate now* that only needs the
+  controller held still.
+- **Steam Input or direct HID**, picked automatically.
 
 ## Controllers
 
@@ -41,7 +62,8 @@ Diagnostics page shows which source is in use.
 
 ## Install
 
-1. Close the game. Download `bl4-gyro_<version>.zip` from Releases.
+1. Close the game. Download `bl4-gyro_<version>.zip` from the
+   [latest release](https://github.com/SalustLab/BL4_Gyro/releases/latest).
 2. Extract it into the Borderlands 4 folder (the one with `Borderlands4.exe` and `OakGame`; in Steam: right-click
    the game > Manage > Browse local files). You get `sdk_mods\BL4Gyro\` there.
 3. Start the game. Gyro is **on** from the first launch.
@@ -87,22 +109,6 @@ contain).
   for 4 s and reports *Calibrated*, or *It moved* (the old calibration is kept). Normal hand tremor is fine.
 - All options are also in the console mod menu (`F6`, `mods`), where the keyboard key for the panel can be rebound.
 
-## Uninstall
-
-Delete the `sdk_mods\BL4Gyro` folder in the game folder. To also drop your gyro settings, delete
-`sdk_mods\settings\BL4Gyro.json`.
-
-## Development
-
-```
-build.cmd                                                   (builds and runs the tests)
-powershell -ExecutionPolicy Bypass -File scripts\package.ps1      (writes dist\bl4-gyro_<version>.zip and the SHA-256s)
-powershell -c "Expand-Archive dist\bl4-gyro_<version>.zip '<game folder>' -Force"   (installs it, like a player)
-```
-
-Before publishing a release: `build.cmd` with no failures, build the zip, send `bl4gyro.dll` to VirusTotal and
-publish the SHA-256s with the release.
-
 ## Limitations
 
 - **Generic gyro controllers:** gyro only in Switch mode (PC/XInput mode sends no motion data to the PC),
@@ -120,11 +126,25 @@ publish the SHA-256s with the release.
   it works properly), generic gyro controllers other than the GuliKit TT Max, the original Switch Pro Controller,
   the Steam Controller (2026) and the DualShock 4.
 
-## License
+## Uninstall
 
-Open source under the MIT license (`LICENSE`).
+Delete the `sdk_mods\BL4Gyro` folder in the game folder. To also drop your gyro settings, delete
+`sdk_mods\settings\BL4Gyro.json`.
 
-## Third party
+## Development
+
+```
+build.cmd                                                   (builds and runs the tests)
+powershell -ExecutionPolicy Bypass -File scripts\package.ps1      (writes dist\bl4-gyro_<version>.zip and the SHA-256s)
+powershell -c "Expand-Archive dist\bl4-gyro_<version>.zip '<game folder>' -Force"   (installs it, like a player)
+```
+
+Before publishing a release: `build.cmd` with no failures, build the zip, send `bl4gyro.dll` to VirusTotal and
+publish the SHA-256s with the release.
+
+## License and credits
+
+Open source under the [MIT license](LICENSE).
 
 - GamepadMotionHelpers v10 (MIT, vendored in `third_party/`).
 - SDL3 3.4.16 (zlib), fetched at build time; `SDL3.dll` ships in the package for the direct HID reading.
@@ -135,3 +155,5 @@ Open source under the MIT license (`LICENSE`).
 ## Support
 
 If BL4 Gyro made the game better for you, you can buy me a coffee on [Ko-fi](https://ko-fi.com/SalustLab). Thanks!
+
+<a href="https://ko-fi.com/SalustLab"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi"></a>

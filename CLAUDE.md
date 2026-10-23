@@ -6,6 +6,7 @@ Borderlands 4 Gyro (**BL4 Gyro**): gyro aim for Borderlands 4 (PC, Steam). The c
 game camera through the game's own look input (`AddYawInput`/`AddPitchInput`); there is no mouse or stick emulation.
 Tested controllers: GuliKit TT Max in Switch mode (via Steam Input), DualSense (HID or Steam Input) and Switch 2 Pro
 via Switch2Connect (HID). The tested game build is Steam `26007962` (game version 1.1) (`TESTED_BUILD` in the mod).
+A new tested build also changes the README: the "tested on" badge and the Limitations line.
 
 Names: mod folder and module `BL4Gyro`, settings `BL4Gyro.json`, log prefix `[BL4Gyro]`, release
 `bl4-gyro_<version>.zip`. Never use the old name "NativeGyro" / "Native Gyro".
