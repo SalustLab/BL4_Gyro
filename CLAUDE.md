@@ -16,7 +16,8 @@ subjects start with the project phase, e.g. `D: ...` (C = the mod, D = usability
 
 The repo is public and minimal: keep it to what builds, tests and ships the mod. No local paths, machine details,
 captures or evidence files (`/captures/`, `trace.csv`, `replay.csv` are git-ignored).
-The only images are the README's banner and panel screenshots in `docs/images/` (not in the release zip).
+The only images are in `docs/images/` (not in the release zip): the README's banner and panel screenshots, and
+the GitHub social preview (`social-preview.png`, 1280x640, uploaded by hand in Settings).
 
 ## Commands
 
