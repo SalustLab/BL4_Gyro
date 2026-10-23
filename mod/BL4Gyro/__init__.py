@@ -43,7 +43,7 @@ SOURCES = ("No controller", "Steam Input", "HID (SDL)", "Replay", "Steam Input u
 
 _dll: ctypes.CDLL | None = None
 _state = {"last": 0.0, "errors": 0, "statics": None, "character": None, "gate_open": False, "stopped": False,
-          "dirty_at": None, "cal_start_at": None, "started_at": 0.0}
+          "dirty_at": None, "cal_start_at": None, "started_at": 0.0, "seen": None}
 _syncing = False
 
 
@@ -323,12 +323,18 @@ def _on_camera_update(_obj, _args, _ret, _func) -> None:
         _housekeeping(now)
         pc = get_pc(possibly_loading=True)
         pawn = pc.Pawn if pc is not None else None
-        on_foot = pawn is not None and pawn.Class._inherits(_state["character"])  # vehicles: untested, gyro off
-        ads = on_foot and int(pawn.ZoomState.State) in ADS_STATES
+        view = pc.GetViewTarget() if pawn is not None else None
+        if debug_trace.value:
+            seen = (pawn.Class.Name if pawn else None, view.Class.Name if view else None)
+            if seen != _state["seen"]:
+                _state["seen"] = seen
+                logging.info(f"[BL4Gyro] pawn={seen[0]} view={seen[1]}")
+        # ZoomState exists only on foot; in a vehicle the gyro moves the camera like on foot, without ADS.
+        ads = pawn is not None and pawn.Class._inherits(_state["character"]) and int(pawn.ZoomState.State) in ADS_STATES
         # Always drain, so motion made while injection is off (menus, pause, panel, suspend) never jumps in later.
         _dll.bl4gyro_take(int(ads), ctypes.byref(_YAW), ctypes.byref(_PITCH))
-        gate_open = (on_foot and not pc.bShowMouseCursor and not pc.IsLookInputIgnored()
-                     and not _state["statics"].IsGamePaused(pc) and pc.GetViewTarget() == pawn)
+        gate_open = (pawn is not None and view == pawn and not pc.bShowMouseCursor and not pc.IsLookInputIgnored()
+                     and not _state["statics"].IsGamePaused(pc))
         if gate_open != _state["gate_open"]:
             _state["gate_open"] = gate_open
             _apply_auto_calibration(auto_calibrate.value)

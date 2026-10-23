@@ -98,11 +98,11 @@ publish the SHA-256s with the release.
 - **The panel's controller buttons can't be held back from the game**, so the panel opens only during gameplay and
   pauses the game while open. With L3 + R3, press L3 first: the first button of a combo reaches the game. The gyro
   button also keeps its game action.
-- **Gyro is off outside on-foot gameplay** (vehicles are untested), with a cursor visible, while paused or when the
-  camera is away from your character.
+- **Gyro works on foot and in vehicles** (as the driver it aims the turret, it doesn't steer). It is off with a
+  cursor visible, while paused or when the camera is away from your character or vehicle (cutscenes).
 - **Tested game build: Steam 25372571.** A game patch can change the input scales or break oak2-mod-manager until
   bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
-- **Not tested:** vehicles, co-op (should work fine but I have no friends to test with, if someone does please do tell me if it works properly), generic gyro controllers other than the Gullikit TT Max, the original Switch Pro Controller and the Steam Controller (2026).
+- **Not tested:** co-op (should work fine but I have no friends to test with, if someone does please do tell me if it works properly), generic gyro controllers other than the Gullikit TT Max, the original Switch Pro Controller and the Steam Controller (2026).
 
 ## License
 

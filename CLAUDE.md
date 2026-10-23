@@ -119,9 +119,10 @@ is the delivery described below.
 - While the panel is open, **key releases always pass to the game** (no stuck keys), and everything done on open
   (pause, `DisableInput`, or the counted `SetIgnoreMoveInput/SetIgnoreLookInput`) is undone exactly once on close.
   Panel actions run on the next camera update, never inside a keybind callback.
-- The gate is open only when all of these hold: the pawn inherits `OakCharacter` (on foot; vehicles are untested
-  and gyro is off there), there is no mouse cursor, look input is not ignored, the game is not paused, and the view
-  target is the pawn. ADS comes from `ZoomState.State`.
+- The gate is open only when all of these hold: there is a pawn and it is the view target (`OakCharacter` on foot,
+  `OakVehicle` when driving), there is no mouse cursor, look input is not ignored, and the game is not paused.
+  Cutscenes keep it closed. In a vehicle the gyro aims the turret, not the steering (measured). ADS comes from
+  `ZoomState.State` and exists only on `OakCharacter`.
 - Steam returns all-zero motion while the game window isn't focused, and `steam::has_data` filters it out.
 - The DLL never writes game memory, and the game side uses only reflection. The CRT is linked statically because
   the DLL lives inside the game process. After 100 consecutive errors, the per-frame hook removes itself.
@@ -132,8 +133,9 @@ is the delivery described below.
   accel_y_g,accel_z_g`) is in the installed mod folder, the DLL replays it instead of reading the controller.
   `dll_replay` uses the same path.
 - The **Debug trace** option writes `trace.csv` next to the mod, with rows `P` (packet), `T` (drain),
-  `R` (ControlRotation per frame, written by the mod through `bl4gyro_trace_line`) and `L` (loop rate). The DLL
-  also logs to `bl4gyro.log` in the mod folder.
+  `R` (ControlRotation per frame, written by the mod through `bl4gyro_trace_line`) and `L` (loop rate). It also
+  logs `[BL4Gyro] pawn=<class> view=<class>` to the mod manager log whenever either changes. The DLL also logs to
+  `bl4gyro.log` in the mod folder.
 - The mod imports `unrealsdk`/`mods_base`, which exist only inside the game, so its Python can't run outside BL4.
   Test the DLL's behavior through `dll_replay` instead.
 
