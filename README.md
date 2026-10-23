@@ -4,6 +4,12 @@
 own camera, through the same path as look input (`AddYawInput`/`AddPitchInput`). There is no mouse or stick
 emulation: the right stick keeps working alongside it and the button prompts never switch to keyboard/mouse.
 
+- Works on foot and in vehicles (as the driver the gyro aims the turret; steering stays on the stick).
+- In-game panel on the controller (L3 + R3) or keyboard (F8): sensitivity, ADS multiplier, activation mode
+  (Always, ADS only, Hold button), gyro button, smoothing, tightening, Player/Local space.
+- Automatic calibration in menus, and a manual *Calibrate now* that only needs the controller held still.
+- Steam Input or direct HID, picked automatically.
+
 Tested on Steam build **25372571**.
 
 ## Controllers
@@ -67,10 +73,11 @@ contain).
 - **Gyro button** (Advanced, none by default): in *Hold button* mode the gyro works only while it is held; in
   *Always* / *ADS only* holding it pauses the gyro so you can re-center the controller — release and it continues
   without a jump. The button keeps its own game action.
-- **Calibration:** if the camera drifts slowly with the controller still, use *Calibrate now*: hold the controller
-  still or rest it on a table (most accurate) within 5 s, it then measures for 4 s and reports *Calibrated*, or
-  *It moved* (the old calibration is kept). Automatic calibration removes drift while a menu, the map or pause is open and the
-  controller lies still (never while you aim or while the gyro panel is open).
+- **Calibration:** usually nothing to do. Automatic calibration removes drift while a menu, the map or pause is
+  open and the controller rests (never while you aim or while the gyro panel is open); the panel then shows
+  *Auto-calibrated*. If the camera still drifts slowly with the controller still, use *Calibrate now*: hold the
+  controller still in your hands, in any position, or rest it on a table (most accurate). You get 5 s, it measures
+  for 4 s and reports *Calibrated*, or *It moved* (the old calibration is kept). Normal hand tremor is fine.
 - All options are also in the console mod menu (`F6`, `mods`), where the keyboard key for the panel can be rebound.
 
 ## Uninstall
@@ -98,11 +105,13 @@ publish the SHA-256s with the release.
 - **The panel's controller buttons can't be held back from the game**, so the panel opens only during gameplay and
   pauses the game while open. With L3 + R3, press L3 first: the first button of a combo reaches the game. The gyro
   button also keeps its game action.
-- **Gyro works on foot and in vehicles** (as the driver it aims the turret, it doesn't steer). It is off with a
-  cursor visible, while paused or when the camera is away from your character or vehicle (cutscenes).
+- **Gyro is off** with a cursor visible, while paused and when the camera is away from your character or vehicle
+  (cutscenes).
 - **Tested game build: Steam 25372571.** A game patch can change the input scales or break oak2-mod-manager until
   bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
-- **Not tested:** co-op (should work fine but I have no friends to test with, if someone does please do tell me if it works properly), generic gyro controllers other than the Gullikit TT Max, the original Switch Pro Controller and the Steam Controller (2026).
+- **Not tested:** co-op (should work fine but I have no friends to test with, if someone does please do tell me if
+  it works properly), generic gyro controllers other than the GuliKit TT Max, the original Switch Pro Controller
+  and the Steam Controller (2026).
 
 ## License
 

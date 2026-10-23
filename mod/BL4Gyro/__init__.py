@@ -22,7 +22,7 @@ from unrealsdk.hooks import Type, add_hook, remove_hook
 
 from . import panel, state
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 __version_info__ = (0, 2, 0)
 __author__ = "bl4-gyro"
 
