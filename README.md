@@ -107,7 +107,7 @@ publish the SHA-256s with the release.
   button also keeps its game action.
 - **Gyro is off** with a cursor visible, while paused and when the camera is away from your character or vehicle
   (cutscenes).
-- **Tested game build: Steam 25372571.** A game patch can change the input scales or break oak2-mod-manager until
+- **Tested game build: Steam 26007962.** A game patch can change the input scales or break oak2-mod-manager until
   bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
 - **Not tested:** co-op (should work fine but I have no friends to test with, if someone does please do tell me if
   it works properly), generic gyro controllers other than the GuliKit TT Max, the original Switch Pro Controller
