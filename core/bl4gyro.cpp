@@ -400,13 +400,18 @@ bool game_has_focus()
     return pid == GetCurrentProcessId();
 }
 
+// Steam can list a pad it doesn't drive (Steam Input off for it) and never send a new motion packet, even with the
+// game focused. After this long without motion in focus, that handle is skipped so the HID fallback can take the pad.
+constexpr double kSteamSilentS = 3;
+
 void sensor_loop()
 {
     steam::Input input;
     HidPad hid;
     gyro::Processor proc;
     Ticker ticker;
-    steam::Handle active = 0;
+    steam::Handle active = 0, silent = 0;
+    double quiet_since = 0;
     steam::MotionData prev{};
     double next_open = 0, window_start = now_s(), next_log = now_s() + 10;
     int packets = 0, type = 0, loops = 0;
@@ -435,13 +440,16 @@ void sensor_loop()
                 proc.reset();
                 rescan = true;
             }
-            if (!active && !handles.empty()) {
+            if (silent && std::find(handles.begin(), handles.end(), silent) == handles.end()) silent = 0;
+            const auto pick = std::find_if(handles.begin(), handles.end(), [&](steam::Handle h) { return h != silent; });
+            if (!active && pick != handles.end()) {
                 if (hid.pad) {
                     log("HID %s released: Steam Input has a controller", hid.name());
                     hid.close();
                 }
-                active = handles.front();
+                active = *pick;
                 type = input.type(active);
+                quiet_since = now;
                 proc.reset();
                 log("controller %llu connected: %s (%d)", static_cast<unsigned long long>(active), steam::type_name(type), type);
             }
@@ -456,6 +464,15 @@ void sensor_loop()
                     trace("P,%.6f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.7f,%.7f,%.7f,%.7f\n", now, m.rot_vel[0], m.rot_vel[1],
                           m.rot_vel[2], m.pos_accel[0], m.pos_accel[1], m.pos_accel[2], m.rot_quat[0], m.rot_quat[1],
                           m.rot_quat[2], m.rot_quat[3]);
+                }
+                if (last_packet >= quiet_since || !game_has_focus()) {
+                    quiet_since = now;
+                } else if (now - quiet_since > kSteamSilentS) {
+                    log("controller %llu sends no motion: trying HID", static_cast<unsigned long long>(active));
+                    silent = active;
+                    active = 0;
+                    proc.reset();
+                    rescan = true;
                 }
             }
         }

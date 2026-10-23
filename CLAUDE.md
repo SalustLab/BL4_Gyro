@@ -61,7 +61,8 @@ The mod has two halves joined by a small C interface (`BL4GYRO_API` exports, loa
 1. **`bl4gyro.dll`** (`core/bl4gyro.cpp` on top of the `gyro_core` static lib). It runs a sensor thread at about
    1 kHz that polls `ISteamInput::GetMotionData` through the game's already-loaded `steam_api64.dll`, using flat
    exports with no Steamworks SDK (`core/steam_motion.*`). When Steam Input hands the game no controller (e.g. a
-   DualSense with Steam Input off), it falls back to the pad's HID through SDL3 (HIDAPI drivers only, one source
+   DualSense with Steam Input off), or lists one that sends no motion for `kSteamSilentS` = 3 s while the game has
+   focus (that handle is then skipped until it disconnects), it falls back to the pad's HID through SDL3 (HIDAPI drivers only, one source
    at a time, `gyro::from_sdl`, repeated `sensor_timestamp`s dropped). A new packet goes through `gyro::from_steam`,
    then `gyro::Processor` (GamepadMotionHelpers: calibration, Player/Local space, tightening, smoothing), then
    `gyro::RateHold`.
