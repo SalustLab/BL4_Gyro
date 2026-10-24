@@ -99,6 +99,8 @@ is the delivery described below.
   **`bl4gyro_button_names`** gives the printed names ("confirm|back|LB|RB" by position) from Steam's
   `GetActionOriginFromXboxOrigin` (`steam::origin_label`, values from isteaminput.h) or SDL's button labels;
   `state.pad_labels` applies the Button names option over them.
+- **`bl4gyro_stick`** gives the right stick (-1..1, x right +, y up +), read with the buttons from the same source
+  (SDL or XInput); it returns 0 while the game isn't focused. Only Flick Stick reads it.
 - **ctypes signatures are declared twice**, in the mod's `_load_dll()` and in `load()` in
   `tests/dll_replay_check.py`. Keep both in sync with the exports.
 - **Axis conventions.** `Sample` uses SDL axes (X right, Y up, Z toward the player, counter-clockwise positive).
@@ -130,6 +132,15 @@ is the delivery described below.
   Cutscenes keep it closed. In a vehicle the gyro aims the turret, not the steering (measured). ADS comes from
   `ZoomState.State` and exists only on `OakCharacter`.
 - Steam returns all-zero motion while the game window isn't focused, and `steam::has_data` filters it out.
+- **Flick Stick** (`state.FlickStick`, yaw only, mod-side; turning counts only between updates past the threshold
+  and not while the stick moves inward fast (release), a 25° forward zone where a flick doesn't turn, with
+  GyroWiki's soft tiered smoothing for slow turns: measured thumb wobble and 0.45° stick steps) suppresses the
+  game's stick look with the reflected profile setting `OakLocalPlayer.SetControllerLookSensitivity(0)`
+  (`pc.Player`). Measured: it stops the right stick on foot (hip fire and ADS) and in vehicles and doesn't scale
+  `AddYawInput` (gyro keeps working). The right-stick deadzone setters were measured and rejected (inner 1.0 still
+  turns on the diagonals). The game saves these settings with its profile, so the player's value is kept in
+  `ui.stick_restore` before the change, restored whenever Flick stops (gate closed, panel, gyro off, disable, hook
+  stopped), and repaired on the first camera update after a crash. Traditional never touches the setting.
 - The DLL never writes game memory, and the game side uses only reflection. The CRT is linked statically because
   the DLL lives inside the game process. After 100 consecutive errors, the per-frame hook removes itself.
 
@@ -139,8 +150,9 @@ is the delivery described below.
   accel_y_g,accel_z_g`) is in the installed mod folder, the DLL replays it instead of reading the controller.
   `dll_replay` uses the same path.
 - The **Debug trace** option writes `trace.csv` next to the mod, with rows `P` (packet), `T` (drain),
-  `R` (ControlRotation per frame, written by the mod through `bl4gyro_trace_line`) and `L` (loop rate). It also
-  logs `[BL4Gyro] pawn=<class> view=<class>` to the mod manager log whenever either changes. The DLL also logs to
+  `R` (per frame: ControlRotation yaw/pitch, gyro yaw/pitch, inject, ADS, flick on, right stick x/y, flick yaw;
+  written by the mod through `bl4gyro_trace_line`) and `L` (loop rate). It also logs
+  `[BL4Gyro] pawn=<class> view=<class>` to the mod manager log whenever either changes. The DLL also logs to
   `bl4gyro.log` in the mod folder.
 - The mod imports `unrealsdk`/`mods_base`, which exist only inside the game, so its Python can't run outside BL4.
   Test the DLL's behavior through `dll_replay` instead.

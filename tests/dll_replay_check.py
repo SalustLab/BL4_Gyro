@@ -29,6 +29,8 @@ def load(path: str) -> ctypes.CDLL:
     dll.bl4gyro_info.restype = ctypes.c_int
     dll.bl4gyro_buttons.argtypes = []
     dll.bl4gyro_buttons.restype = ctypes.c_uint
+    dll.bl4gyro_stick.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
+    dll.bl4gyro_stick.restype = ctypes.c_int
     dll.bl4gyro_button_names.argtypes = [ctypes.c_char_p, ctypes.c_int]
     dll.bl4gyro_button_names.restype = ctypes.c_int
     return dll
@@ -53,6 +55,8 @@ def run(dll: ctypes.CDLL, csv: Path, log: Path, fps: float, calibrate: float = 0
         time.sleep(1 / fps)
     last_info = info(dll)
     assert dll.bl4gyro_buttons() == 0  # replay: no pad read
+    x, y = ctypes.c_double(1), ctypes.c_double(1)
+    assert dll.bl4gyro_stick(ctypes.byref(x), ctypes.byref(y)) == 0 and x.value == y.value == 0  # replay: no pad read
     assert dll.bl4gyro_button_names(ctypes.create_string_buffer(64), 64) == 0  # no pad: names unknown
     dll.bl4gyro_stop()
     dll.bl4gyro_take(0, ctypes.byref(yaw), ctypes.byref(pitch))

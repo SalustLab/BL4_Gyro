@@ -11,6 +11,7 @@ from typing import Any, Callable
 
 MODES = ("Always", "ADS only", "Hold button")
 BUTTON_NAMES = ("Auto", "Xbox", "PlayStation", "Nintendo")
+STICK_MODES = ("Traditional", "Flick Stick")
 # Names of the buttons the panel uses, by controller family: (bottom face, right face, left shoulder, right shoulder).
 # Positions are what the DLL reads (Xbox layout), so a Switch pad's bottom button is its B.
 PAD_LABELS = {"Xbox": ("A", "B", "LB", "RB"), "PlayStation": ("X", "O", "L1", "R1"), "Nintendo": ("B", "A", "L", "R")}
@@ -29,6 +30,88 @@ def should_inject(*, gyro_enabled: bool, panel_open: bool, calibrating: bool, mo
     if button_held:
         return False
     return ads if mode == "ADS only" else True
+
+
+def flick_on(*, stick_mode: str, gyro_enabled: bool, panel_open: bool, gate_open: bool) -> bool:
+    """Flick Stick runs only in gameplay (the gate: on foot and in vehicles, where the right stick turns the camera
+    or turret). With gyro off there would be no vertical aim, so the stick stays Traditional."""
+    return stick_mode == "Flick Stick" and gyro_enabled and not panel_open and gate_open
+
+
+def wrap_deg(angle: float) -> float:
+    return (angle + 180.0) % 360.0 - 180.0
+
+
+class FlickStick:
+    """Jibb Smart's flick stick, yaw only. Pushing the stick past the threshold turns the camera toward the stick's
+    direction (up 0, right +90, left -90, down 180) over flick_s with an ease-out; turning the held stick turns the
+    camera by the same angle, counted only between updates that are both past the threshold and not while the stick
+    moves inward faster than RELEASE_SPEED (easing the thumb off the edge and back, or sliding sideways while letting
+    go, doesn't turn); releasing below the threshold (minus FLICK_RELEASE, against edge jitter) ends the
+    gesture. Slow turns go through soft tiered smoothing (GyroWiki) between TURN_SMOOTH_DPS / 2 and TURN_SMOOTH_DPS,
+    which hides the stick's resolution steps without changing the total turn; faster turns are direct. A flick started within FLICK_FORWARD_DEG of straight up doesn't turn (a thumb pushing "up" is a few
+    degrees off; Jibb Smart's flick deadzone angle), but rotating from there still turns by the exact angle.
+    Time-based, so the result does not depend on the frame rate. After reset() the stick must come back
+    to neutral before it flicks (no flick when gameplay resumes with the stick held)."""
+
+    FLICK_RELEASE = 0.1
+    FLICK_FORWARD_DEG = 25.0  # pushes aimed "up" measured in game: -22 to +20 degrees
+    RELEASE_SPEED = 1.5       # stick radius per second; turning along a square gate stays well below
+    TURN_SMOOTH_DPS = 360.0  # GyroWiki's 0.1 rad per frame at 60 fps
+    TURN_SMOOTH_S = 0.1      # time constant of the smoothed part
+
+    def __init__(self) -> None:
+        self.armed = True
+        self.held = False
+        self.angle = 0.0
+        self.target = 0.0
+        self.elapsed = 0.0
+        self.progress = 1.0  # eased progress of the current flick; 1 = no flick running
+        self.past = False    # the last update was past the threshold
+        self.r = 0.0         # stick radius at the last update
+        self.pending = 0.0   # smoothed turn not output yet
+
+    def reset(self) -> None:
+        self.armed = self.held = False
+        self.progress = 1.0
+        self.pending = 0.0
+
+    def update(self, x: float, y: float, dt: float, threshold: float, flick_s: float) -> float:
+        """Camera yaw in degrees for this frame (right +)."""
+        r = math.hypot(x, y)
+        yaw = 0.0
+        past, self.past = self.past, r >= threshold
+        inward = dt > 0 and (self.r - r) / dt > self.RELEASE_SPEED
+        self.r = r
+        if self.held and r < threshold - self.FLICK_RELEASE or not self.held and r < threshold:
+            self.held = False
+            self.armed = self.armed or r < threshold - self.FLICK_RELEASE
+            self.pending = 0.0  # stop turning as soon as the stick is released
+        elif self.held:
+            angle = math.degrees(math.atan2(x, y))
+            if past and self.past and not inward:
+                turn = wrap_deg(angle - self.angle)
+                speed = abs(turn) / dt if dt > 0 else 0.0
+                direct = min(max(speed / (self.TURN_SMOOTH_DPS / 2) - 1.0, 0.0), 1.0)
+                yaw += turn * direct
+                self.pending += turn * (1.0 - direct)
+            self.angle = angle
+            take = self.pending * (1.0 - math.exp(-max(dt, 0.0) / self.TURN_SMOOTH_S))
+            yaw += take
+            self.pending -= take
+        elif self.armed:
+            self.held, self.armed = True, False
+            self.angle = self.target = math.degrees(math.atan2(x, y))
+            if abs(self.target) < self.FLICK_FORWARD_DEG:
+                self.target = 0.0
+            self.elapsed, self.progress = 0.0, 0.0
+        if self.progress < 1.0:
+            self.elapsed += max(dt, 0.0)
+            t = min(self.elapsed / flick_s, 1.0) if flick_s > 0 else 1.0
+            eased = max(1.0 - (1.0 - t) ** 2, self.progress)  # monotonic, even if flick_s changes mid-flick
+            yaw += self.target * (eased - self.progress)
+            self.progress = eased
+        return yaw
 
 
 def pad_family(controller: str) -> str:

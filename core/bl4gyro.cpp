@@ -298,6 +298,10 @@ struct HidPad {
 // 7 R3, 8 LB, 9 RB, 10-13 D-pad up/down/left/right, 14 LT, 15 RT (positional names, Xbox layout). 0 while the game
 // window is not focused.
 std::atomic<unsigned> g_buttons{0};
+// Right stick for Flick Stick, -1..1 (x right +, y up +), read with the buttons from the same source; 0 while the game
+// window is not focused (g_focused false). Raw: the game's own stick deadzone/sensitivity never applies to it.
+std::atomic<float> g_stick_x{0}, g_stick_y{0};
+std::atomic<bool> g_focused{false};
 
 struct XInputPads {
     using GetState = DWORD(WINAPI*)(DWORD, XINPUT_STATE*);
@@ -316,8 +320,9 @@ struct XInputPads {
         log("XInput unavailable: controller buttons only through HID");
     }
 
-    unsigned read(double now)
+    unsigned read(double now, float stick[2])
     {
+        stick[0] = stick[1] = 0;
         if (!get_state) return 0;
         const bool scan = now >= next_scan; // probing empty slots is slow: only once a second
         if (scan) next_scan = now + 1;
@@ -338,13 +343,21 @@ struct XInputPads {
                 if (b & m.x) bits |= 1u << m.bit;
             if (st.Gamepad.bLeftTrigger > 128) bits |= 1u << 14;
             if (st.Gamepad.bRightTrigger > 128) bits |= 1u << 15;
+            const float x = std::max(st.Gamepad.sThumbRX / 32767.0f, -1.0f);
+            const float y = std::max(st.Gamepad.sThumbRY / 32767.0f, -1.0f);
+            if (x * x + y * y > stick[0] * stick[0] + stick[1] * stick[1]) { // several pads: the one being used
+                stick[0] = x;
+                stick[1] = y;
+            }
         }
         return bits;
     }
 };
 
-unsigned sdl_buttons(SDL_Gamepad* pad)
+unsigned sdl_buttons(SDL_Gamepad* pad, float stick[2])
 {
+    stick[0] = std::max(SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_RIGHTX) / 32767.0f, -1.0f);
+    stick[1] = -std::max(SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_RIGHTY) / 32767.0f, -1.0f); // SDL: down +
     const SDL_GamepadButton map[] = {SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_WEST,
                                      SDL_GAMEPAD_BUTTON_NORTH, SDL_GAMEPAD_BUTTON_BACK, SDL_GAMEPAD_BUTTON_START,
                                      SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK,
@@ -514,7 +527,12 @@ void sensor_loop()
         }
         if (now >= next_buttons) { // ~125 Hz is plenty for menu input
             next_buttons = now + 0.008;
-            g_buttons = !game_has_focus() ? 0 : hid.pad ? sdl_buttons(hid.pad) : xinput.read(now);
+            const bool focused = game_has_focus();
+            float stick[2] = {};
+            g_buttons = !focused ? 0 : hid.pad ? sdl_buttons(hid.pad, stick) : xinput.read(now, stick);
+            g_stick_x = stick[0];
+            g_stick_y = stick[1];
+            g_focused = focused;
         }
         update_info([&](Info& i) {
             i.source = active ? Source::Steam : hid.pad ? Source::Hid : input.is_open() || hid.ready ? Source::None
@@ -594,6 +612,8 @@ BL4GYRO_API void bl4gyro_stop()
     if (g_thread.joinable()) g_thread.join();
     set_trace(false);
     g_buttons = 0;
+    g_stick_x = g_stick_y = 0;
+    g_focused = false;
     set_status("stopped");
     log("bl4gyro stopped");
     std::lock_guard lock(g_log_mutex);
@@ -654,6 +674,14 @@ BL4GYRO_API int bl4gyro_button_names(char* buf, int size)
 
 // Controller buttons as a bit mask (see g_buttons). Read by the mod once per camera update.
 BL4GYRO_API unsigned bl4gyro_buttons() { return g_buttons; }
+
+// Right stick (see g_stick_x). Returns 1 while the game window is focused, 0 otherwise (stick reads 0 then).
+BL4GYRO_API int bl4gyro_stick(double* x, double* y)
+{
+    if (x) *x = g_stick_x;
+    if (y) *y = g_stick_y;
+    return g_focused ? 1 : 0;
+}
 
 // Panel status as numbers: [0] source (0 none, 1 Steam, 2 HID, 3 replay, 4 Steam Input unavailable),
 // [1] motion packets/s (2 s window), [2] seconds since the last packet (-1 none yet), [3] calibration progress 0..1,

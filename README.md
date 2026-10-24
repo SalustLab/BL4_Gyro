@@ -34,6 +34,8 @@ emulation: the right stick keeps working alongside it and the button prompts nev
 - **Calibration that stays out of the way:** automatic in menus, and a manual *Calibrate now* that only needs the
   controller held still.
 - **Steam Input or direct HID**, picked automatically.
+- **Optional Flick Stick** (Advanced > Right stick mode): the right stick turns the camera toward where you push
+  it, gyro aims. Off by default; the right stick keeps the game's own aiming.
 
 ## Controllers
 
@@ -96,12 +98,19 @@ contain).
 | Panel page | Settings |
 |---|---|
 | Main | Gyro on/off, activation mode (Always, ADS only, Hold button), sensitivity *Grouped* (one slider for both directions) or *Individual* (horizontal and vertical), ADS multiplier, calibrate now (with progress), controller status |
-| Advanced | Invert X/Y, gyro space (Player/Local), automatic calibration, smoothing, tightening, gyro button, panel combo, button names (Auto, Xbox, PlayStation, Nintendo), restore defaults |
+| Advanced | Invert X/Y, gyro space (Player/Local), automatic calibration, smoothing, tightening, right stick mode (Traditional, Flick Stick) with flick time and flick threshold, gyro button, panel combo, button names (Auto, Xbox, PlayStation, Nintendo), restore defaults |
 | Diagnostics | Controller source (Steam Input / HID), motion packets/s, gyro offset, camera hook state and restart, game build, debug trace, copy diagnostics |
 
 - **Gyro button** (Advanced, none by default): in *Hold button* mode the gyro works only while it is held; in
   *Always* / *ADS only* holding it pauses the gyro so you can re-center the controller — release and it continues
   without a jump. The button keeps its own game action.
+- **Flick Stick** (Advanced > *Right stick mode*, *Traditional* by default): push the right stick past the *Flick
+  threshold* (0.9 = near the edge) and the camera turns toward that direction in *Flick time* (0.1 s): right 90°,
+  left 90°, down 180°; (almost) straight up doesn't turn. Keep it pushed and rotate it to keep turning by the same
+  angle; let it go back to the center for the next flick. The stick turns only horizontally: vertical aim is the
+  gyro's, which keeps working during a flick. Works on foot and in vehicles (turret). It needs gyro on: with gyro
+  off the right stick works the traditional way. While it runs the mod sets the game's controller look sensitivity
+  to 0 and puts your value back in menus, the pause screen, the gyro panel and when the mod is turned off.
 - **Calibration:** usually nothing to do. Automatic calibration removes drift while a menu, the map or pause is
   open and the controller rests (never while you aim or while the gyro panel is open); the panel then shows
   *Auto-calibrated*. If the camera still drifts slowly with the controller still, use *Calibrate now*: hold the
@@ -120,6 +129,9 @@ contain).
   button also keeps its game action.
 - **Gyro is off** with a cursor visible, while paused and when the camera is away from your character or vehicle
   (cutscenes).
+- **Flick Stick changes a game setting while you play.** The game saves its controller look sensitivity with your
+  profile, so if the game crashes during gameplay the 0 can be saved; the mod repairs it on the next launch. If you
+  remove the mod right after such a crash, set *Look sensitivity* (controller) back in the game's options.
 - **Tested game build: Steam 26007962.** A game patch can change the input scales or break oak2-mod-manager until
   bl-sdk updates it; another build logs a warning. All options stay available in the console mod menu (`F6`, `mods`).
 - **Not tested:** co-op (should work fine but I have no friends to test with, if someone does please do tell me if

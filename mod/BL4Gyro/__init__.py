@@ -22,7 +22,7 @@ from unrealsdk.hooks import Type, add_hook, remove_hook
 
 from . import panel, state
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __version_info__ = tuple(int(part) for part in __version__.split("."))
 __author__ = "bl4-gyro"
 
@@ -34,6 +34,7 @@ HOOK_ID = "bl4_gyro_frame"
 # and re-checked on 26007962 (Debug trace: ControlRotation turns exactly the yaw/pitch sent);
 # re-measure (one AddYawInput/AddPitchInput call, read ControlRotation) if a patch changes them.
 YAW_SCALE, PITCH_SCALE = 2.5, -2.5
+STICK_OFF = 0.0  # controller look sensitivity that stops the game's right-stick look (Flick Stick)
 ADS_STATES = (1, 2)  # EZoomState.ZoomingIn, EZoomState.Zoomed
 TESTED_BUILD = "26007962"
 SAME_UPDATE_S = 0.001  # the hook fires once per camera modifier; one pass per camera update is enough
@@ -43,7 +44,8 @@ MAX_ERRORS = 100
 SOURCES = ("No controller", "Steam Input", "HID (SDL)", "Replay", "Steam Input unavailable")
 
 _dll: ctypes.CDLL | None = None
-_state = {"last": 0.0, "errors": 0, "statics": None, "character": None, "gate_open": False, "stopped": False,
+_flick = state.FlickStick()
+_state = {"flick": False, "stick_checked": False, "last": 0.0, "errors": 0, "statics": None, "character": None, "gate_open": False, "stopped": False,
           "dirty_at": None, "cal_start_at": None, "started_at": 0.0, "seen": None}
 _syncing = False
 
@@ -143,11 +145,23 @@ button_labels = SpinnerOption("Button names", "Auto", list(state.BUTTON_NAMES),
                                           "one if they look wrong (a Switch 2 pad through Switch2Connect shows up as a "
                                           "DualSense).",
                               on_change_anytime=lambda _o, _v: _changed())
+stick_mode = SpinnerOption("Right stick mode", "Traditional", list(state.STICK_MODES),
+                           description="Traditional: the game's own stick aiming. Flick Stick: push the right stick to "
+                                       "turn toward that direction (down = turn around), rotate it to keep turning; "
+                                       "vertical aim is the gyro's. Needs gyro on.",
+                           on_change_anytime=lambda _o, _v: _changed())
+flick_time = SliderOption("Flick time (s)", 0.1, 0.05, 0.3, 0.01, False,
+                          description="How long a flick takes to turn the camera. Shorter = snappier.",
+                          on_change_anytime=lambda _o, _v: _changed())
+flick_threshold = SliderOption("Flick threshold", 0.9, 0.5, 0.95, 0.05, False,
+                               description="How far the right stick must be pushed to flick (1 = the edge). Lower "
+                                           "flicks earlier; higher ignores small stick bumps.",
+                               on_change_anytime=lambda _o, _v: _changed())
 ui = HiddenOption("ui", {"intro_seen": False})
 
-SLIDERS = (sens_x, sens_y, ads_multiplier, tighten, smoothing)
+SLIDERS = (sens_x, sens_y, ads_multiplier, tighten, smoothing, flick_time, flick_threshold)
 BOOLS = (gyro_enabled, link_vertical, invert_x, invert_y, auto_calibrate, debug_trace)
-SPINNERS = (mode, space, combo, gyro_button, button_labels)
+SPINNERS = (mode, space, combo, gyro_button, button_labels, stick_mode)
 
 
 @keybind("Open gyro panel", "F8", description="Keyboard alternative to the controller combo.")
@@ -234,6 +248,8 @@ def diagnostics() -> str:
         f"sens {sens_x.value}/{sens_y.value}{' linked' if link_vertical.value else ''}  ads x{ads_multiplier.value}  "
         f"invert {invert_x.value}/{invert_y.value}  space {space.value}  auto-cal {auto_calibrate.value}  "
         f"tighten {tighten.value}  smoothing {smoothing.value}",
+        f"right stick {stick_mode.value}  flick time {flick_time.value}  threshold {flick_threshold.value}  "
+        f"flick {'active' if _state['flick'] else 'off'}",
     ])
 
 
@@ -280,6 +296,8 @@ def _load_dll() -> ctypes.CDLL:
     dll.bl4gyro_info.restype = ctypes.c_int
     dll.bl4gyro_buttons.argtypes = []
     dll.bl4gyro_buttons.restype = ctypes.c_uint
+    dll.bl4gyro_stick.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double)]
+    dll.bl4gyro_stick.restype = ctypes.c_int
     dll.bl4gyro_button_names.argtypes = [ctypes.c_char_p, ctypes.c_int]
     dll.bl4gyro_button_names.restype = ctypes.c_int
     return dll
@@ -297,6 +315,8 @@ def _installed_build() -> str:
 
 _YAW = ctypes.c_double()
 _PITCH = ctypes.c_double()
+_STICK_X = ctypes.c_double()
+_STICK_Y = ctypes.c_double()
 
 
 def _housekeeping(now: float) -> None:
@@ -311,11 +331,51 @@ def _housekeeping(now: float) -> None:
         mod.save_settings()
 
 
+def _stick_override(on: bool) -> None:
+    """Flick Stick: turns off the game's own right-stick look while it runs, through the game's profile setting
+    (OakLocalPlayer controller look sensitivity 0: measured to stop the stick on foot and in vehicles, gyro and left
+    stick unaffected). The game saves that setting with its profile, so the player's value is kept in BL4Gyro.json
+    (ui.stick_restore) before it is changed and put back whenever Flick Stick stops; a crash in between is repaired on
+    the next camera update after launch. Never raises: it also runs from the error path."""
+    try:
+        pc = get_pc(possibly_loading=True)
+        player = pc.Player if pc is not None else None
+        if player is None:
+            return
+        saved = ui.value.get("stick_restore")
+        if on:
+            live = float(player.GetControllerLookSensitivity())
+            if live != STICK_OFF and live != saved:
+                ui.value["stick_restore"] = live
+                save_now()  # before the game can save its profile with the stick turned off
+            player.SetControllerLookSensitivity(STICK_OFF)
+        elif saved is not None and float(player.GetControllerLookSensitivity()) == STICK_OFF:
+            player.SetControllerLookSensitivity(saved)
+            logging.info(f"[BL4Gyro] right stick look sensitivity restored to {saved}")
+    except Exception as e:  # noqa: BLE001
+        logging.error(f"[BL4Gyro] right stick setting failed: {type(e).__name__}: {e}")
+
+
+def _flick_yaw(flick: bool, dt: float) -> float:
+    """Flick Stick yaw for this camera update (degrees). Off, unfocused or just switched on: the gesture is reset, so
+    a stick held while gameplay resumes never flicks."""
+    if flick != _state["flick"] or not _state["stick_checked"]:
+        _state["flick"], _state["stick_checked"] = flick, True
+        _stick_override(flick)
+        _flick.reset()
+    if not flick:
+        return 0.0
+    if not _dll.bl4gyro_stick(ctypes.byref(_STICK_X), ctypes.byref(_STICK_Y)):
+        _flick.reset()
+        return 0.0
+    return _flick.update(_STICK_X.value, _STICK_Y.value, dt, flick_threshold.value, flick_time.value)
+
+
 def _on_camera_update(_obj, _args, _ret, _func) -> None:
     now = time.perf_counter()
     if now - _state["last"] < SAME_UPDATE_S:
         return
-    _state["last"] = now
+    dt, _state["last"] = now - _state["last"], now
     try:
         _housekeeping(now)
         pc = get_pc(possibly_loading=True)
@@ -339,16 +399,19 @@ def _on_camera_update(_obj, _args, _ret, _func) -> None:
                                      calibrating=calibrating(), mode=mode.value,
                                      button_held=panel.held(gyro_button.value),
                                      ads=ads, gate_open=gate_open)
+        flick = state.flick_on(stick_mode=stick_mode.value, gyro_enabled=gyro_enabled.value,
+                               panel_open=panel.is_open(), gate_open=gate_open)
+        flick_yaw = _flick_yaw(flick, dt)
         if debug_trace.value and pc is not None:
             r = pc.ControlRotation
             _dll.bl4gyro_trace_line(
-                f"{r.Yaw:.5f},{r.Pitch:.5f},{_YAW.value:.5f},{_PITCH.value:.5f},{int(inject)},{int(ads)}".encode())
+                f"{r.Yaw:.5f},{r.Pitch:.5f},{_YAW.value:.5f},{_PITCH.value:.5f},{int(inject)},{int(ads)},"
+                f"{int(flick)},{_STICK_X.value:.4f},{_STICK_Y.value:.4f},{flick_yaw:.5f}".encode())
+        yaw = flick_yaw + (_YAW.value if inject else 0.0)
         _state["errors"] = 0
-        if not inject:
-            return
-        if _YAW.value:
-            pc.AddYawInput(_YAW.value / YAW_SCALE)
-        if _PITCH.value:
+        if yaw:
+            pc.AddYawInput(yaw / YAW_SCALE)
+        if inject and _PITCH.value:
             pc.AddPitchInput(_PITCH.value / PITCH_SCALE)
     except Exception as e:  # noqa: BLE001 - never let a per-frame error escape into the game
         _state["errors"] += 1
@@ -357,6 +420,9 @@ def _on_camera_update(_obj, _args, _ret, _func) -> None:
         if _state["errors"] == MAX_ERRORS:
             remove_hook(FRAME_HOOK, Type.PRE, HOOK_ID)
             _state["stopped"] = True
+            if _state["flick"]:  # give the stick back to the game
+                _state["flick"] = False
+                _stick_override(False)
             logging.error("[BL4Gyro] disabled camera injection after repeated errors (game update?)")
 
 
@@ -405,7 +471,7 @@ def on_enable() -> None:
     replay = (HERE / "replay.csv") if (HERE / "replay.csv").is_file() else None  # dev: repeatable in-game tests
     _push_settings()
     _dll.bl4gyro_start(str(HERE / "bl4gyro.log"), str(replay).encode() if replay else None)
-    _state.update(last=0.0, errors=0, gate_open=False, stopped=False, cal_start_at=None,
+    _state.update(last=0.0, errors=0, gate_open=False, stick_checked=False, stopped=False, cal_start_at=None,
                   started_at=time.perf_counter(), statics=unrealsdk.find_class("GameplayStatics").ClassDefaultObject,
                   character=unrealsdk.find_class("OakCharacter"))
     add_hook(FRAME_HOOK, Type.PRE, HOOK_ID, _on_camera_update)
@@ -420,6 +486,9 @@ def on_enable() -> None:
 def on_disable() -> None:
     panel.stop()
     remove_hook(FRAME_HOOK, Type.PRE, HOOK_ID)
+    if _state["flick"]:
+        _state["flick"] = False
+        _stick_override(False)
     if _dll is not None:
         _dll.bl4gyro_stop()
     logging.info("[BL4Gyro] disabled")

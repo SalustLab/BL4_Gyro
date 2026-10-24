@@ -628,6 +628,14 @@ def _build_menu() -> state.Menu:
     def individual() -> bool:
         return not g.link_vertical.value
 
+    def flick() -> bool:
+        return g.stick_mode.value == "Flick Stick"
+
+    def stick_help() -> str:
+        if flick() and not g.gyro_enabled.value:
+            return "Gyro is off: the right stick works the traditional way until you turn gyro on."
+        return g.stick_mode.description
+
     def intro_done(_value) -> None:
         _intro_seen()
         menu.section, menu.index, menu.trail = "Main", 0, []
@@ -667,7 +675,7 @@ def _build_menu() -> state.Menu:
             calibrate_row,
             state.Row("Calibration", "info", g.calibration_text),
             status_row,
-            state.Row("Advanced", "section", target="Advanced", help="Invert, gyro space, smoothing, buttons."),
+            state.Row("Advanced", "section", target="Advanced", help="Invert, gyro space, smoothing, right stick mode, buttons."),
             state.Row("Diagnostics", "section", target="Diagnostics", help="Controller source, rates, debug tools."),
         ],
         "Advanced": [
@@ -677,6 +685,9 @@ def _build_menu() -> state.Menu:
             _option_row(g.auto_calibrate, "toggle"),
             _option_row(g.smoothing, "slider", fine=0.1, fmt="{:.1f}"),
             _option_row(g.tighten, "slider", fine=0.1, fmt="{:.1f}"),
+            _option_row(g.stick_mode, "choice", help=stick_help),
+            _option_row(g.flick_time, "slider", fmt="{:.2f}", visible=flick),
+            _option_row(g.flick_threshold, "slider", fmt="{:.2f}", fine=0.01, visible=flick),
             _option_row(g.gyro_button, "choice"),
             _option_row(g.combo, "choice"),
             names_row,

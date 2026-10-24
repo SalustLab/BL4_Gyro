@@ -174,7 +174,127 @@ def calibration_label() -> None:
     check(label(3, 0.0, learned, True).startswith("It moved"), "rejected manual calibration still says so")
 
 
-for test in (precedence, combo, repeater, numbers, settings, menu, button_labels, calibration_label):
+def flick_run(stick, seconds: float, fps: float, threshold: float = 0.9, flick_s: float = 0.1, f=None,
+              jitter: bool = False) -> float:
+    """Total yaw over `seconds`; stick(t) -> (x, y). Jittered frame times alternate 0.5x / 1.5x."""
+    f = f or state.FlickStick()
+    total, t, i = 0.0, 0.0, 0
+    while t < seconds - 1e-9:
+        dt = min((0.5 if i % 2 else 1.5) / fps if jitter else 1 / fps, seconds - t)
+        t += dt
+        i += 1
+        total += f.update(*stick(t), dt, threshold, flick_s)
+    return total
+
+
+def at(deg: float, r: float = 1.0):
+    import math
+    return lambda _t: (r * math.sin(math.radians(deg)), r * math.cos(math.radians(deg)))
+
+
+def flick() -> None:
+    near = lambda a, b, tol=1e-6: abs(a - b) < tol  # noqa: E731
+    for deg in (45, 90, 135, -45, -90, -135):
+        check(near(flick_run(at(deg), 0.5, 60), deg), f"flick {deg}")
+    total = flick_run(at(180), 0.5, 60)
+    check(near(abs(total), 180), f"flick down = 180 ({total})")
+    check(near(flick_run(at(90), 0.5, 30), flick_run(at(90), 0.5, 144, jitter=True)), "30 fps = jittered 144 fps")
+    f = state.FlickStick()
+    first = f.update(*at(90)(0), 1 / 60, 0.9, 0.1)
+    check(0 < first < 90, f"flick is spread over time, not one jump ({first})")
+    check(near(flick_run(at(90, 0.5), 0.5, 60), 0), "inside the threshold: nothing")
+    # Pushes aimed "up" measured in game started between -22 and +20 degrees.
+    check(near(flick_run(at(22), 0.5, 60), 0) and near(flick_run(at(-22), 0.5, 60), 0), "almost straight up: no flick")
+    check(near(flick_run(at(30), 0.5, 60), 30) and near(flick_run(at(-30), 0.5, 60), -30), "outside the forward zone")
+    turn = lambda t: at(10 + 90 * min(max(t - 0.1, 0.0), 1.0))(t)  # noqa: E731
+    check(near(flick_run(turn, 2.5, 60), 90, 1e-3), "start in the forward zone, then rotate: exact angle change")
+    check(near(state.wrap_deg(179 - -179), -2) and near(state.wrap_deg(-179 - 179), 2) and state.wrap_deg(180) == -180,
+          "wrap to [-180, 180)")
+
+
+def flick_rotation() -> None:
+    import math
+    near = lambda a, b, tol=1e-6: abs(a - b) < tol  # noqa: E731
+    # Push straight up (no flick), then turn a full circle clockwise in one second: +360 total.
+    spin = lambda t: 2 * math.pi * min(max(t - 0.1, 0.0), 1.0)  # noqa: E731
+    circle = lambda t: (math.sin(spin(t)), math.cos(spin(t)))  # noqa: E731
+    check(near(flick_run(circle, 2.5, 144), 360, 1e-3), "full circle while held = 360, no jump at +-180")
+    back = lambda t: (math.sin(-spin(t)), math.cos(-spin(t)))  # noqa: E731
+    check(near(flick_run(back, 2.5, 30), -360, 1e-3), "counter-clockwise = -360")
+    f = state.FlickStick()
+    flick_run(at(179), 0.5, 60, f=f)
+    check(near(rest_of(f, at(-179), 0.1), 2, 1e-3), "+179 -> -179 turns +2, not -358")
+    wobble = lambda t: at(90 + (0.3 if int(t * 120) % 2 else -0.3))(t)  # noqa: E731
+    check(near(flick_run(wobble, 2.0, 120), 90, 0.31), "tiny wobble while held: no drift")
+    check(near(flick_run(at(90), 3.0, 60), 90), "held still: no drift")
+
+
+def flick_gestures() -> None:
+    near = lambda a, b, tol=1e-6: abs(a - b) < tol  # noqa: E731
+    f = state.FlickStick()
+    edge = lambda t: at(90, 0.9 if int(t * 60) % 2 else 0.85)(t)  # noqa: E731
+    check(near(flick_run(edge, 1.0, 60, f=f), 90), "oscillating at the threshold edge: one flick only")
+    out_in = lambda t: at(90, 1.0 if t < 0.3 or t > 0.6 else 0.0)(t)  # noqa: E731
+    check(near(flick_run(out_in, 1.0, 60), 180), "back to neutral, then out again: two flicks")
+    f = state.FlickStick()
+    first = f.update(*at(90)(0), 0.03, 0.9, 0.1)
+    check(near(first + rest_of(f, at(90), 0.3), 90), "flick time raised mid-flick still lands on the target")
+    check(near(f.update(*at(90)(0), 0.0, 0.9, 0.1), 0), "zero dt is safe")
+    f = state.FlickStick()
+    f.reset()
+    check(near(flick_run(at(90), 0.5, 60, f=f), 0), "after reset a held stick does not flick")
+    check(near(flick_run(lambda t: at(90, 0.0 if t < 0.1 else 1.0)(t), 0.6, 60, f=f), 90), "neutral re-arms")
+    fast = lambda t: at(90 if t < 0.05 else -90)(t)  # noqa: E731
+    check(near(flick_run(fast, 0.5, 60), 90 + 180) or near(flick_run(fast, 0.5, 60), 90 - 180),
+          "fast swing to the other side is a 180 turn on top of the flick")
+
+
+def flick_smoothing() -> None:
+    near = lambda a, b, tol=1e-6: abs(a - b) < tol  # noqa: E731
+    # Held at the edge, the stick angle steps back and forth by its resolution (0.45 deg, measured on a TT Max).
+    f = state.FlickStick()
+    rest_of(f, at(0), 0.1)
+    steps = [f.update(*at(0.45 if i % 2 else 0.0)(0), 1 / 60, 0.9, 0.1) for i in range(120)]
+    check(max(map(abs, steps)) < 0.1, f"resolution steps are smoothed ({max(map(abs, steps)):.3f})")
+    # Easing the thumb off the edge and back (measured: r 1.0 -> 0.86 -> 1.0, angle -5 -> -10 -> -5) doesn't turn.
+    f = state.FlickStick()
+    rest_of(f, at(-5), 0.1)
+    path = [at(-7, 0.95), at(-10, 0.86), at(-9, 0.88), at(-5, 1.0)]
+    out = [f.update(*p(0), 1 / 60, 0.9, 0.1) for p in path] + [rest_of(f, at(-5), 0.1)]
+    check(near(sum(out), 0, 0.01), f"partial release path doesn't turn ({out})")
+    # Releasing, the thumb can slide sideways before leaving the edge (measured: r 1.0 -> 0.946, angle +1.6 -> +7.9
+    # in one frame); moving inward that fast is a release, not a turn.
+    f = state.FlickStick()
+    rest_of(f, at(1.6), 0.1)
+    out = [f.update(*at(7.9, 0.946)(0), 1 / 60, 0.9, 0.1), f.update(*at(12, 0.79)(0), 1 / 60, 0.9, 0.1)]
+    check(max(map(abs, out)) < 0.05, f"sideways slide while releasing doesn't turn ({out})")
+    # A fast intentional turn is not delayed: 30 deg in one 60 fps frame comes out at once.
+    f = state.FlickStick()
+    rest_of(f, at(0), 0.1)
+    check(near(f.update(*at(30)(0), 1 / 60, 0.9, 0.1), 30), "fast turn is direct")
+    check(near(rest_of(f, at(30), 0.1), 0), "nothing left pending after a fast turn")
+    f = state.FlickStick()
+    rest_of(f, at(0), 0.1)
+    slow = sum(f.update(*at(0.5 * i)(0), 1 / 60, 0.9, 0.1) for i in range(1, 61))
+    check(near(slow + rest_of(f, at(30), 0.1), 30, 1e-3), "slow turn: smoothed, same total")
+
+
+def rest_of(f, stick, flick_s: float) -> float:
+    return sum(f.update(*stick(0), 0.01, 0.9, flick_s) for _ in range(100))
+
+
+def flick_on() -> None:
+    args = dict(stick_mode="Flick Stick", gyro_enabled=True, panel_open=False, gate_open=True)
+    on = lambda **over: state.flick_on(**{**args, **over})  # noqa: E731
+    check(on(), "flick mode in gameplay -> on")
+    check(not on(stick_mode="Traditional"), "Traditional -> off")
+    check(not on(gyro_enabled=False), "gyro off -> Traditional (no vertical aim otherwise)")
+    check(not on(panel_open=True) and not on(gate_open=False), "panel or closed gate -> off")
+    check(state.sanitize("Mouse", "Traditional", choices=state.STICK_MODES) == "Traditional", "bad saved mode")
+
+
+for test in (precedence, combo, repeater, numbers, settings, menu, button_labels, calibration_label, flick, flick_rotation,
+             flick_gestures, flick_smoothing, flick_on):
     test()
 print("OK" if not failures else f"{failures} FAILED")
 sys.exit(1 if failures else 0)
