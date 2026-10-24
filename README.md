@@ -108,9 +108,11 @@ contain).
   threshold* (0.9 = near the edge) and the camera turns toward that direction in *Flick time* (0.1 s): right 90°,
   left 90°, down 180°; (almost) straight up doesn't turn. Keep it pushed and rotate it to keep turning by the same
   angle; let it go back to the center for the next flick. The stick turns only horizontally: vertical aim is the
-  gyro's, which keeps working during a flick. Works on foot and in vehicles (turret). It needs gyro on: with gyro
-  off the right stick works the traditional way. While it runs the mod sets the game's controller look sensitivity
-  to 0 and puts your value back in menus, the pause screen, the gyro panel and when the mod is turned off.
+  gyro's, which keeps working during a flick. Works on foot and in vehicles (turret). Flicks are exact at every zoom
+  level: they turn the camera in degrees, not mouse counts, so a 90° flick is 90° hip-fire, aiming down sights or
+  through a sniper scope (measured). It needs gyro on: with gyro off the right stick works the traditional way.
+  While it runs the mod sets the game's controller look sensitivity to 0 and puts your value back in menus, the
+  pause screen, the gyro panel and when the mod is turned off.
 - **Calibration:** usually nothing to do. Automatic calibration removes drift while a menu, the map or pause is
   open and the controller rests (never while you aim or while the gyro panel is open); the panel then shows
   *Auto-calibrated*. If the camera still drifts slowly with the controller still, use *Calibrate now*: hold the

@@ -137,10 +137,13 @@ is the delivery described below.
   GyroWiki's soft tiered smoothing for slow turns: measured thumb wobble and 0.45° stick steps) suppresses the
   game's stick look with the reflected profile setting `OakLocalPlayer.SetControllerLookSensitivity(0)`
   (`pc.Player`). Measured: it stops the right stick on foot (hip fire and ADS) and in vehicles and doesn't scale
-  `AddYawInput` (gyro keeps working). The right-stick deadzone setters were measured and rejected (inner 1.0 still
-  turns on the diagonals). The game saves these settings with its profile, so the player's value is kept in
-  `ui.stick_restore` before the change, restored whenever Flick stops (gate closed, panel, gyro off, disable, hook
-  stopped), and repaired on the first camera update after a crash. Traditional never touches the setting.
+  `AddYawInput` (gyro keeps working). Flicks land 1:1 in degrees at every zoom level (measured within 0.3% hip-fire,
+  on a regular sight and on a high-zoom sniper scope): BL4 doesn't scale `AddYawInput` while aiming, and the ADS
+  multiplier applies only to the gyro, so never route flick yaw through it. The right-stick deadzone setters were
+  measured and rejected (inner 1.0 still turns on the diagonals). The game saves these settings with its profile, so
+  the player's value is kept in `ui.stick_restore` before the change, restored whenever Flick stops (gate closed,
+  panel, gyro off, disable, hook stopped), and repaired on the first camera update after a crash. Traditional never
+  touches the setting.
 - The DLL never writes game memory, and the game side uses only reflection. The CRT is linked statically because
   the DLL lives inside the game process. After 100 consecutive errors, the per-frame hook removes itself.
 
